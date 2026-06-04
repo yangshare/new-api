@@ -24,7 +24,7 @@ if ($currentBranch -ne "dev") {
     Write-Warn "当前分支是 $currentBranch,不是 dev"
     $answer = Read-Host "  是否切换到 dev 分支?(Y/n)"
     if ($answer -eq "" -or $answer -match "^[Yy]") {
-        git checkout dev 2>&1 | Out-Null
+        git checkout dev
         if ($LASTEXITCODE -ne 0) {
             Write-Err "切换到 dev 分支失败"
             exit 1
@@ -59,7 +59,7 @@ try {
     git fetch upstream 2>&1 | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Write-Err "fetch upstream 失败,请检查网络连接"
-        return
+        exit 1
     }
     Write-Ok "拉取完成"
 
