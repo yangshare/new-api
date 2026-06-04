@@ -67,10 +67,9 @@ try {
 
     # 4. 快进合并
     Write-Info "快进合并 upstream/main（$beforeCount 个新提交）..."
-    $mergeOutput = git merge --ff-only upstream/main 2>&1
+    git merge --ff-only upstream/main
     if ($LASTEXITCODE -ne 0) {
         Write-Err "快进合并失败！main 分支可能包含非上游的提交"
-        Write-Info "错误详情: $mergeOutput"
         Write-Info "建议: 先手动清理 main 分支上的非上游提交，然后重试"
         $failed = $true; return
     }
