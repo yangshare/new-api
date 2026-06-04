@@ -103,7 +103,7 @@ try {
 
     if ($stashed) {
         Write-Info "恢复 stash 暂存..."
-        git stash pop 2>&1 | Out-Null
+        git stash pop
         if ($LASTEXITCODE -ne 0) {
             Write-Warn "stash pop 失败,请手动执行: git stash pop"
         }

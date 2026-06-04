@@ -44,7 +44,7 @@ $failed = $false
 try {
     # 1. 切换到 main
     Write-Info "切换到 main 分支..."
-    git checkout main 2>&1 | Out-Null
+    git checkout main
     if ($LASTEXITCODE -ne 0) {
         Write-Err "切换到 main 分支失败"
         $failed = $true; return
@@ -89,12 +89,12 @@ try {
 
     if ($originalBranch -and $originalBranch -ne "main") {
         Write-Info "切回 $originalBranch 分支..."
-        git checkout $originalBranch 2>&1 | Out-Null
+        git checkout $originalBranch
     }
 
     if ($stashed) {
         Write-Info "恢复 stash 暂存..."
-        git stash pop 2>&1 | Out-Null
+        git stash pop
         if ($LASTEXITCODE -ne 0) {
             Write-Warn "stash pop 失败,请手动执行: git stash pop"
         }
