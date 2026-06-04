@@ -1,4 +1,4 @@
-# sync-dev.ps1 — 在 dev 分支拉取上游更新,展示信息面板,合并由用户手动执行
+﻿# sync-dev.ps1 — 在 dev 分支拉取上游更新,展示信息面板,合并由用户手动执行
 # 用法: .\scripts\sync-dev.ps1
 
 $ErrorActionPreference = "Stop"
