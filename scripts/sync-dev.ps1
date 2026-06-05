@@ -1,4 +1,4 @@
-# sync-dev.ps1 - fetch upstream changes on dev and print a manual review command.
+# sync-dev.ps1 - fetch upstream changes on dev and apply a no-commit review merge.
 # Usage: .\scripts\sync-dev.ps1
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +14,20 @@ function Invoke-GitQuiet($gitArgs) {
     try {
         & git @gitArgs *> $null
         return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
+function Invoke-GitOutput($gitArgs) {
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $output = & git @gitArgs 2>&1
+        return [pscustomobject]@{
+            ExitCode = $LASTEXITCODE
+            Output = $output
+        }
     } finally {
         $ErrorActionPreference = $previousErrorActionPreference
     }
@@ -66,16 +80,53 @@ Write-Host "  ----------------------------------------------" -ForegroundColor C
 if ($upstreamNew -eq 0) {
     Write-Host "  No merge needed; dev already includes upstream/main." -ForegroundColor Green
 } else {
-    Write-Host "  Suggested manual review merge:" -ForegroundColor Cyan
+    $status = git status --porcelain
+    if ($status) {
+        Write-Host "  Working tree is not clean. Commit, stash, or abort the current merge first." -ForegroundColor Red
+        Write-Host "  No merge was attempted." -ForegroundColor Red
+        Write-Host "  ==============================================" -ForegroundColor Cyan
+        Write-Host ""
+        exit 1
+    }
+
+    Write-Host "  Running manual review merge:" -ForegroundColor Cyan
     Write-Host "    git merge --no-commit --no-ff upstream/main" -ForegroundColor White
     Write-Host ""
-    Write-Host "  Inspect the merge result before committing:" -ForegroundColor Cyan
+
+    $mergeResult = Invoke-GitOutput @("merge", "--no-commit", "--no-ff", "upstream/main")
+    $mergeExitCode = $mergeResult.ExitCode
+    if ($mergeResult.Output) {
+        $mergeResult.Output | ForEach-Object { Write-Host "  $_" }
+    }
+
+    Write-Host ""
+    if ($mergeExitCode -eq 0) {
+        Write-Host "  Merge is staged but not committed." -ForegroundColor Green
+        Write-Host "  Review changes in IDEA, then run: git commit" -ForegroundColor Cyan
+    } else {
+        $conflictFiles = @(git diff --name-only --diff-filter=U 2>&1)
+        if ($conflictFiles.Count -gt 0) {
+            Write-Host "  Merge has conflicts. Resolve them in IDEA, then run:" -ForegroundColor Yellow
+            Write-Host "    git add <resolved-files>" -ForegroundColor White
+            Write-Host "    git commit" -ForegroundColor White
+        } else {
+            Write-Host "  Merge failed before creating a reviewable merge state." -ForegroundColor Red
+        }
+    }
+
+    Write-Host ""
+    Write-Host "  Inspect the merge result:" -ForegroundColor Cyan
     Write-Host "    git status" -ForegroundColor White
     Write-Host "    git diff --cached" -ForegroundColor White
     Write-Host "    git diff" -ForegroundColor White
     Write-Host ""
-    Write-Host "  If there are conflicts: resolve them, git add, then git commit." -ForegroundColor Cyan
     Write-Host "  To reject the result: git merge --abort" -ForegroundColor Cyan
+
+    if ($mergeExitCode -ne 0) {
+        Write-Host "  ==============================================" -ForegroundColor Cyan
+        Write-Host ""
+        exit $mergeExitCode
+    }
 }
 
 Write-Host "  ==============================================" -ForegroundColor Cyan

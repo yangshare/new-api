@@ -22,6 +22,12 @@ function Assert-FileContains($Path, $Expected, $Name) {
     Assert-Contains $content $Expected $Name
 }
 
+function Assert-True($Condition, $Name) {
+    if (-not $Condition) {
+        throw "$Name failed: expected condition to be true"
+    }
+}
+
 function Invoke-Git($GitArgs, $Repo) {
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
@@ -110,15 +116,22 @@ function Test-SyncDevExitsWhenUserDeclinesDevCheckout {
     }
 }
 
-function Test-SyncDevSuggestsNoCommitMergeForManualReview {
+function Test-SyncDevRunsNoCommitMergeForManualReview {
     $fixture = New-SyncFixture
     try {
         Push-Location $fixture.Work
+        $headBefore = Invoke-Git -GitArgs @("rev-parse", "HEAD") -Repo $fixture.Work
         $output = Invoke-ScriptUnderTest -Path (Join-Path $ScriptRoot "sync-dev.ps1")
+        $headAfter = Invoke-Git -GitArgs @("rev-parse", "HEAD") -Repo $fixture.Work
+        $status = Invoke-Git -GitArgs @("status", "--porcelain") -Repo $fixture.Work
+        $mergeHeadExists = Test-Path -LiteralPath (Join-Path $fixture.Work ".git\MERGE_HEAD")
         Pop-Location
 
-        Assert-Contains $output "git merge --no-commit --no-ff upstream/main" "sync-dev manual review merge"
-        Assert-NotContains $output "git merge upstream/main" "sync-dev manual review merge"
+        Assert-Contains $output "git merge --no-commit --no-ff upstream/main" "sync-dev no-commit merge"
+        Assert-Contains $output "Merge is staged but not committed" "sync-dev no-commit merge"
+        Assert-Contains $status "README.md" "sync-dev no-commit merge"
+        Assert-Contains $headAfter $headBefore.Trim() "sync-dev no-commit merge"
+        Assert-True $mergeHeadExists "sync-dev no-commit merge"
     } finally {
         if ((Get-Location).Path -eq $fixture.Work) { Pop-Location }
         Remove-Item -LiteralPath $fixture.Root -Recurse -Force
@@ -139,48 +152,17 @@ function Test-RejectPatchFilesAreIgnored {
     Assert-FileContains (Join-Path $repoRoot ".gitignore") "*.rej" "reject patch gitignore"
 }
 
-function Test-SyncUpstreamPushFailureDoesNotReportComplete {
-    $fixture = New-SyncFixture
-    try {
-        Push-Location $fixture.Work
-        Invoke-Git -GitArgs @("checkout", "main") -Repo $fixture.Work | Out-Null
-        Invoke-Git -GitArgs @("remote", "set-url", "--push", "origin", (Join-Path $fixture.Root "missing-origin.git")) -Repo $fixture.Work | Out-Null
-        $output = Invoke-ScriptUnderTest -Path (Join-Path $ScriptRoot "sync-upstream.ps1")
-        Pop-Location
-
-        Assert-NotContains $output "upstream/main" "sync-upstream push failure"
-    } finally {
-        if ((Get-Location).Path -eq $fixture.Work) { Pop-Location }
-        Remove-Item -LiteralPath $fixture.Root -Recurse -Force
-    }
-}
-
-function Test-SyncUpstreamDetachedHeadDoesNotStashPopOnMain {
-    $fixture = New-SyncFixture
-    try {
-        Push-Location $fixture.Work
-        $head = Invoke-Git -GitArgs @("rev-parse", "HEAD") -Repo $fixture.Work
-        Invoke-Git -GitArgs @("checkout", "--detach", $head.Trim()) -Repo $fixture.Work | Out-Null
-        Set-Content -Path (Join-Path $fixture.Work "local.txt") -Value "local" -Encoding utf8
-        $output = Invoke-ScriptUnderTest -Path (Join-Path $ScriptRoot "sync-upstream.ps1")
-        $branch = Invoke-Git -GitArgs @("branch", "--show-current") -Repo $fixture.Work
-        $status = Invoke-Git -GitArgs @("status", "--porcelain") -Repo $fixture.Work
-        Pop-Location
-
-        Assert-Contains $output "detached HEAD" "sync-upstream detached"
-        Assert-NotContains $branch "main" "sync-upstream detached"
-        Assert-Contains $status "local.txt" "sync-upstream detached"
-    } finally {
-        if ((Get-Location).Path -eq $fixture.Work) { Pop-Location }
-        Remove-Item -LiteralPath $fixture.Root -Recurse -Force
+function Test-SyncUpstreamScriptIsRemoved {
+    $scriptPath = Join-Path $ScriptRoot "sync-upstream.ps1"
+    if (Test-Path -LiteralPath $scriptPath) {
+        throw "sync-upstream removal failed: sync-upstream.ps1 should not exist"
     }
 }
 
 Test-SyncDevExitsWhenUserDeclinesDevCheckout
-Test-SyncDevSuggestsNoCommitMergeForManualReview
+Test-SyncDevRunsNoCommitMergeForManualReview
 Test-SyncDevDoesNotUseRejectPatchFlow
 Test-RejectPatchFilesAreIgnored
-Test-SyncUpstreamPushFailureDoesNotReportComplete
-Test-SyncUpstreamDetachedHeadDoesNotStashPopOnMain
+Test-SyncUpstreamScriptIsRemoved
 
 Write-Host "sync script tests passed"

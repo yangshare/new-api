@@ -2,125 +2,77 @@
 
 ## 目标
 
-在 fork 项目中优雅地同步上游更新，同时保留个性化开发能力。
+在 fork 项目中同步上游更新，同时保留 `dev` 分支上的个性化开发能力。同步入口收敛为一个脚本，避免 `main` 镜像同步和 `dev` 合并流程并存造成误用。
 
 ## 分支模型
 
 ```
 upstream/main  ──●──●──●──●──●──●──    母仓持续更新
                   \        \      \
-your main      ──●──●──●──●──●──●──    纯同步通道（脚本1维护）
-                     \           \
-your dev       ──●──●──●──●──●──●──    你的开发分支（脚本2辅助）
-                           ↑ merge upstream/main（手动执行）
+your dev       ──●──●──●──●──●──●──    你的开发分支
+                           ↑ no-commit merge upstream/main
 ```
 
 | 分支 | 角色 | 维护者 |
 |---|---|---|
 | `upstream/main` | 母仓 | 上游作者 |
-| `main` | 上游镜像，只读同步 | `sync-upstream.ps1` |
-| `dev` | 日常开发 + 打包部署 | 手动 + `sync-dev.ps1` 辅助 |
+| `dev` | 日常开发 + 打包部署 | `sync-dev.ps1` + 人工审查 |
 
-### 分支规则
+## 分支规则
 
-- **main**：永远是 `upstream/main` 的镜像，禁止在上面做任何开发
-- **dev**：所有个性化开发都在这里，也是打包镜像的分支
-- 一次性初始化（创建 dev 分支、清理 main）由用户手动完成，不在脚本范围内
+- **dev**：所有个性化开发都在这里，也是打包镜像的分支。
+- 合并上游时保留人工审查点，不自动提交。
 
 ## 脚本设计
 
-### 脚本 1：`scripts/sync-upstream.ps1`
+### `scripts/sync-dev.ps1`
 
-**用途**：将上游最新代码同步到 main 分支，保持 main 与母仓一致。
-
-**执行流程**：
-
-1. 记录当前所在分支
-2. 检查是否有未提交的改动 → 如果有，自动 stash 暂存
-3. 切换到 main 分支
-4. `git fetch upstream`
-5. `git merge --ff-only upstream/main`（快进合并，有分叉会失败并提示）
-6. `git push origin main`（推送到 fork）
-7. 切回原来的分支
-8. 如果之前有 stash → 自动 pop 恢复
-9. 打印结果摘要：本次同步了多少个新提交
-
-**安全保障**：
-
-- `--ff-only` 确保 main 只走快进，出现意外分叉会立即停止
-- 自动 stash/pop 处理，不会中断进行中的开发
-- 任何一步失败都会打印中文错误提示并恢复现场
-
-### 脚本 2：`scripts/sync-dev.ps1`
-
-**用途**：在 dev 分支上拉取上游更新，打印状态信息，合并由用户手动执行。
+**用途**：在 `dev` 分支拉取上游更新，并执行可审查的 no-commit merge。
 
 **执行流程**：
 
-1. 检查当前是否在 dev 分支 → 如果不在，提示并询问是否切换
-2. 检查是否有未提交的改动 → 如果有，自动 stash 暂存
-3. `git fetch upstream`
-4. 打印信息面板：
-   - 当前分支名
-   - 上游新增了多少个提交（`dev..upstream/main` 计数）
-   - dev 自己的独立提交数（`upstream/main..dev` 计数）
-   - 提示手动合并命令：`git merge upstream/main`
-   - 提示冲突解决步骤
-5. 如果之前有 stash → 自动 pop 恢复
+1. 检查当前是否在 `dev` 分支；如果不在，提示并询问是否切换。
+2. 执行 `git fetch upstream`。
+3. 显示上游新增提交数和当前分支独立提交数。
+4. 如果工作区不干净，退出并提示用户先处理本地修改。
+5. 如果存在上游新增提交，执行：
 
-**信息面板示例**：
-
+```powershell
+git merge --no-commit --no-ff upstream/main
 ```
-══════════════════════════════════════════
-  上游同步信息
-══════════════════════════════════════════
-  当前分支: dev
-  上游新增提交: 12 个
-  你的独立提交: 5 个
-──────────────────────────────────────────
-  请手动执行合并:
-    git merge upstream/main
 
-  如有冲突:
-    1. 解决冲突文件
-    2. git add <已解决的文件>
-    3. git merge --continue
-══════════════════════════════════════════
-```
+6. 停在提交前，供 IDEA 审查变更或解决标准 Git 冲突。
 
 ## 日常工作流
 
+```powershell
+.\scripts\sync-dev.ps1
+git status
+git diff --cached
+git diff
 ```
-┌─ 同步上游 ─────────────────────────────────────┐
-│                                                 │
-│  ① 同步上游到 main:                              │
-│     .\scripts\sync-upstream.ps1                 │
-│                                                 │
-│  ② 拉取上游更新到 dev:                           │
-│     .\scripts\sync-dev.ps1                      │
-│                                                 │
-│  ③ 手动合并:                                     │
-│     git merge upstream/main                     │
-│     （有冲突就解决，没有就直接成功）               │
-│                                                 │
-│  ④ 继续在 dev 上开发                             │
-│                                                 │
-│  ⑤ 打包镜像时直接在 dev 分支上打包               │
-│                                                 │
-└─────────────────────────────────────────────────┘
+
+如果接受合并结果：
+
+```powershell
+git commit
+```
+
+如果不接受合并结果：
+
+```powershell
+git merge --abort
 ```
 
 ## 技术约束
 
 - **脚本格式**：PowerShell（`.ps1`）
 - **合并策略**：merge（不使用 rebase）
-- **脚本不自动合并**：只负责拉取和展示信息，合并操作由用户手动执行
-- **中文输出**：所有提示信息和错误消息使用中文
+- **提交策略**：脚本自动 merge，但不自动 commit
 - **脚本位置**：`scripts/` 目录下
 
 ## 文件清单
 
 | 文件 | 用途 |
 |---|---|
-| `scripts/sync-upstream.ps1` | 同步上游 → main → origin |
-| `scripts/sync-dev.ps1` | 为 dev 拉取上游更新 + 信息面板 |
+| `scripts/sync-dev.ps1` | 为 `dev` 拉取上游更新并执行 no-commit merge |
