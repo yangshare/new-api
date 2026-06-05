@@ -4,6 +4,7 @@
 .history
 upload
 *.exe
+*.rej
 *.db
 build
 *.db-journal

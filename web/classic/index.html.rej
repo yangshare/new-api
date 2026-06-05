@@ -1,8 +1,0 @@
-diff a/web/classic/index.html b/web/classic/index.html	(rejected hunks)
-@@ -24,6 +24,5 @@
-   <body>
-     <noscript>You need to enable JavaScript to run this app.</noscript>
-     <div id="root"></div>
--    <script type="module" src="/src/index.jsx"></script>
-   </body>
- </html>

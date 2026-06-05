@@ -17,6 +17,11 @@ function Assert-NotContains($Text, $Unexpected, $Name) {
     }
 }
 
+function Assert-FileContains($Path, $Expected, $Name) {
+    $content = Get-Content -LiteralPath $Path -Raw
+    Assert-Contains $content $Expected $Name
+}
+
 function Invoke-Git($GitArgs, $Repo) {
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
@@ -120,6 +125,20 @@ function Test-SyncDevSuggestsNoCommitMergeForManualReview {
     }
 }
 
+function Test-SyncDevDoesNotUseRejectPatchFlow {
+    $scriptPath = Join-Path $ScriptRoot "sync-dev.ps1"
+    $script = Get-Content -LiteralPath $scriptPath -Raw
+
+    Assert-NotContains $script "git apply --reject" "sync-dev reject patch flow"
+    Assert-NotContains $script "*.rej" "sync-dev reject patch flow"
+    Assert-NotContains $script ".rej" "sync-dev reject patch flow"
+}
+
+function Test-RejectPatchFilesAreIgnored {
+    $repoRoot = Split-Path -Parent $ScriptRoot
+    Assert-FileContains (Join-Path $repoRoot ".gitignore") "*.rej" "reject patch gitignore"
+}
+
 function Test-SyncUpstreamPushFailureDoesNotReportComplete {
     $fixture = New-SyncFixture
     try {
@@ -159,6 +178,8 @@ function Test-SyncUpstreamDetachedHeadDoesNotStashPopOnMain {
 
 Test-SyncDevExitsWhenUserDeclinesDevCheckout
 Test-SyncDevSuggestsNoCommitMergeForManualReview
+Test-SyncDevDoesNotUseRejectPatchFlow
+Test-RejectPatchFilesAreIgnored
 Test-SyncUpstreamPushFailureDoesNotReportComplete
 Test-SyncUpstreamDetachedHeadDoesNotStashPopOnMain
 
