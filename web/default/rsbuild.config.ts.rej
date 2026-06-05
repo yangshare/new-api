@@ -1,0 +1,9 @@
+diff a/web/default/rsbuild.config.ts b/web/default/rsbuild.config.ts	(rejected hunks)
+@@ -65,6 +65,7 @@ export default defineConfig(({ envMode }) => {
+     },
+     server: {
+       host: '0.0.0.0',
++      strictPort: true,
+       proxy: devProxy,
+     },
+     output: {
