@@ -50,20 +50,12 @@ if ($currentBranch -ne "dev") {
     }
 }
 
-# ── 保存现场 ──────────────────────────────────────────
-
-$stashed = $false
+# ── 门禁: 未提交的修改 ──────────────────────────────
 
 $status = git status --porcelain
 if ($status) {
-    Write-Info "检测到未提交的改动,正在 stash 暂存..."
-    git stash push -m "sync-dev-auto-stash" --include-untracked
-    if ($LASTEXITCODE -ne 0) {
-        Write-Err "stash 失败,请手动处理后重试"
-        exit 1
-    }
-    $stashed = $true
-    Write-Ok "已暂存"
+    Write-Host "  [ERROR] 有未提交的修改，请先处理工作区再运行此脚本" -ForegroundColor Red
+    exit 1
 }
 
 # ── 状态变量 ──────────────────────────────────────────
@@ -92,7 +84,7 @@ try {
 
     if ($upstreamNew -eq 0) {
         Write-Ok "dev 已包含所有上游更新,无需同步"
-        return   # finally 仍会执行(恢复 stash)
+        return
     }
 
     Write-Info "上游新增 $upstreamNew 个提交,你的独立提交 $devOwn 个"
@@ -134,21 +126,38 @@ try {
         $applied = $true
         Write-Ok "上游改动已干净应用到工作区"
     } else {
-        # 有冲突区域 — 使用三路合并,在冲突处插入标记
-        git apply --3way "$env:TEMP\sync-dev-upstream.patch" 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Write-Err "应用补丁失败,请检查文件状态后重试"
-            exit 1
-        }
-        $applied = $true
+        # 有冲突区域 — 使用 --reject: 干净部分直接应用,
+        # 冲突部分生成 .rej 文件,不阻断整个流程
+        $applyOutput = git apply --reject "$env:TEMP\sync-dev-upstream.patch" 2>&1
+        $applyExit = $LASTEXITCODE
 
-        # 检查是否有冲突标记
-        Invoke-GitQuiet @("diff", "--check")
-        if ($LASTEXITCODE -ne 0) {
-            $hasConflicts = $true
-            $conflictFiles = @(git diff --name-only --diff-filter=U 2>&1)
-            Write-Warn "部分文件存在冲突区域,已插入合并标记"
+        # --reject 模式下即使有 .rej 文件也不会返回非零退出码,
+        # 但如果完全无法处理(如补丁格式错误)仍会失败
+        if ($applyExit -ne 0) {
+            # 检查是否部分成功(有文件被修改了)
+            $partialFiles = @(git diff --name-only 2>&1)
+            if ($partialFiles.Count -gt 0) {
+                $applied = $true
+                Write-Warn "部分补丁应用失败,已成功 $($partialFiles.Count) 个文件"
+            } else {
+                Write-Err "应用补丁失败: $applyOutput"
+                exit 1
+            }
         } else {
+            $applied = $true
+        }
+
+        # 检查 .rej 文件(冲突的补丁片段)
+        $rejFiles = @(Get-ChildItem -Path . -Recurse -Filter "*.rej" -File 2>$null | ForEach-Object {
+            $_.FullName.Replace((Get-Location).Path + "\", "").Replace((Get-Location).Path + "/", "")
+        })
+
+        if ($rejFiles.Count -gt 0) {
+            $hasConflicts = $true
+            $conflictFiles = $rejFiles
+            Write-Warn "以下 $($rejFiles.Count) 个文件有冲突片段(.rej):"
+            foreach ($f in $rejFiles) { Write-Host "    $f" -ForegroundColor Yellow }
+        } elseif ($applied) {
             Write-Ok "上游改动已应用到工作区"
         }
     }
@@ -160,16 +169,6 @@ try {
     Remove-Item "$env:TEMP\sync-dev-upstream.patch" -ErrorAction SilentlyContinue
 
 } finally {
-    # ── 恢复现场 ──────────────────────────────────────
-
-    if ($stashed) {
-        Write-Info "恢复 stash 暂存..."
-        git stash pop
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warn "stash pop 失败,请手动执行: git stash pop"
-        }
-    }
-
     # ── 结果面板 ──────────────────────────────────────
 
     Write-Host ""
@@ -208,8 +207,9 @@ try {
         Write-Host "  ║  下一步:                                     ║" -ForegroundColor Cyan
         Write-Host "  ║  1. 用 IDEA 查看文件改动,审查上游变更       ║" -ForegroundColor White
         if ($hasConflicts) {
-            Write-Host "  ║  2. 搜索 <<<<<<< 定位冲突,手动解决           ║" -ForegroundColor White
-            Write-Host "  ║  3. git add . && git commit                  ║" -ForegroundColor White
+            Write-Host "  ║  2. 查看 .rej 文件了解未能应用的代码片段     ║" -ForegroundColor White
+            Write-Host "  ║  3. 手动合并后删除 .rej 文件                 ║" -ForegroundColor White
+            Write-Host "  ║  4. git add . && git commit                  ║" -ForegroundColor White
         } else {
             Write-Host "  ║  2. 满意后 git add . && git commit           ║" -ForegroundColor White
         }
