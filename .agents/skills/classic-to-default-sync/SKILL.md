@@ -1,11 +1,13 @@
 ---
 name: classic-to-default-sync
-description: "Use when the user provides a commit hash and asks to compare, port, or sync web/classic changes into web/default, including phrases like /classic-to-default-sync, sync classic to default, port from classic, compare classic commit, or classic 和 default 对比."
+description: Sync web classic changes to web default for a supplied commit hash.
 ---
 
 # Classic-to-Default Sync
 
 Given a **commit ID**, audit all `web/classic` changes and ensure `web/default` reaches feature parity with the best possible implementation.
+
+Trigger phrases include `/classic-to-default-sync <hash>`, `classic-to-default-sync <hash>`, `sync classic to default`, `port from classic`, `compare classic commit`, `classic 和 default 对比`, and similar requests that supply a commit hash with classic/default comparison intent.
 
 ## Input
 
