@@ -8,6 +8,17 @@ function Write-Ok($msg) { Write-Host "  $msg" -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "  $msg" -ForegroundColor Yellow }
 function Write-Err($msg) { Write-Host "  $msg" -ForegroundColor Red }
 
+function Invoke-GitQuiet($gitArgs) {
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & git @gitArgs *> $null
+        return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+}
+
 # ── 前置检查 ──────────────────────────────────────────
 
 # 检查 upstream remote 是否存在
@@ -57,8 +68,8 @@ if ($status) {
 try {
     # 1. 拉取上游
     Write-Info "从 upstream 拉取最新代码..."
-    git fetch upstream > $null 2> $null
-    if ($LASTEXITCODE -ne 0) {
+    $fetchExitCode = Invoke-GitQuiet @("fetch", "upstream")
+    if ($fetchExitCode -ne 0) {
         Write-Err "fetch upstream 失败,请检查网络连接"
         exit 1
     }
@@ -87,13 +98,16 @@ try {
     if ($upstreamNew -eq 0) {
         Write-Host "  ║  无需合并,dev 已包含所有上游更新        ║" -ForegroundColor Green
     } else {
-        Write-Host "  ║  请手动执行合并:                         ║" -ForegroundColor Cyan
-        Write-Host "  ║    git merge upstream/main               ║" -ForegroundColor White
+        Write-Host "  ║  建议手动执行可审查合并:                 ║" -ForegroundColor Cyan
+        Write-Host "  ║    git merge --no-commit --no-ff upstream/main" -ForegroundColor White
         Write-Host "  ║                                          ║" -ForegroundColor Cyan
-        Write-Host "  ║  如有冲突:                               ║" -ForegroundColor Cyan
-        Write-Host "  ║    1. 解决冲突文件                       ║" -ForegroundColor Cyan
-        Write-Host "  ║    2. git add <已解决的文件>              ║" -ForegroundColor Cyan
-        Write-Host "  ║    3. git merge --continue               ║" -ForegroundColor Cyan
+        Write-Host "  ║  合并后先检查自动合并结果:               ║" -ForegroundColor Cyan
+        Write-Host "  ║    git status                            ║" -ForegroundColor White
+        Write-Host "  ║    git diff --cached                     ║" -ForegroundColor White
+        Write-Host "  ║    git diff                              ║" -ForegroundColor White
+        Write-Host "  ║                                          ║" -ForegroundColor Cyan
+        Write-Host "  ║  如有冲突: 解决后 git add,再 git commit  ║" -ForegroundColor Cyan
+        Write-Host "  ║  不接受结果: git merge --abort           ║" -ForegroundColor Cyan
     }
 
     Write-Host "  ╚══════════════════════════════════════════╝" -ForegroundColor Cyan

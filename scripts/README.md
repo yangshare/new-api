@@ -51,18 +51,28 @@ git remote -v
 - 如果拒绝切换，脚本会退出，不会在当前分支提示合并上游。
 - 自动暂存当前未提交改动（包含未跟踪文件），结束后恢复。
 - 执行 `git fetch upstream` 后显示上游新增提交数和当前分支独立提交数。
-- 不会自动执行合并；如需合并，按脚本提示手动执行：
+- 不会自动执行合并；如需合并，按脚本提示手动执行可审查合并：
 
 ```powershell
-git merge upstream/main
+git merge --no-commit --no-ff upstream/main
+```
+
+执行后先检查自动合并结果：
+
+```powershell
+git status
+git diff --cached
+git diff
 ```
 
 如果出现冲突，按 Git 提示解决冲突后执行：
 
 ```powershell
 git add <已解决的文件>
-git merge --continue
+git commit
 ```
+
+如果不接受合并结果，执行 `git merge --abort` 放弃本次合并。
 
 ## 推荐同步流程
 
@@ -76,8 +86,10 @@ git merge --continue
 确认 `sync-dev.ps1` 提示需要合并后，再在 `dev` 分支手动执行：
 
 ```powershell
-git merge upstream/main
+git merge --no-commit --no-ff upstream/main
 ```
+
+这个命令不会自动提交合并结果。Git 能自动合并的文件会进入待提交状态，无法自动合并的文件会进入冲突状态；你可以检查、修改后再 `git commit`，也可以用 `git merge --abort` 放弃。
 
 ## 脚本测试
 
@@ -90,5 +102,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\sync-script-tests.
 测试覆盖：
 
 - `sync-dev.ps1` 在非 `dev` 分支且用户拒绝切换时不会提示合并。
+- `sync-dev.ps1` 只提示可审查合并命令，不提示普通 merge。
 - `sync-upstream.ps1` 推送失败时不会显示同步完成。
 - `sync-upstream.ps1` 在 detached HEAD 下拒绝执行。

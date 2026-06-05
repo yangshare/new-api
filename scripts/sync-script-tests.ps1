@@ -105,6 +105,21 @@ function Test-SyncDevExitsWhenUserDeclinesDevCheckout {
     }
 }
 
+function Test-SyncDevSuggestsNoCommitMergeForManualReview {
+    $fixture = New-SyncFixture
+    try {
+        Push-Location $fixture.Work
+        $output = Invoke-ScriptUnderTest -Path (Join-Path $ScriptRoot "sync-dev.ps1")
+        Pop-Location
+
+        Assert-Contains $output "git merge --no-commit --no-ff upstream/main" "sync-dev manual review merge"
+        Assert-NotContains $output "git merge upstream/main" "sync-dev manual review merge"
+    } finally {
+        if ((Get-Location).Path -eq $fixture.Work) { Pop-Location }
+        Remove-Item -LiteralPath $fixture.Root -Recurse -Force
+    }
+}
+
 function Test-SyncUpstreamPushFailureDoesNotReportComplete {
     $fixture = New-SyncFixture
     try {
@@ -143,6 +158,7 @@ function Test-SyncUpstreamDetachedHeadDoesNotStashPopOnMain {
 }
 
 Test-SyncDevExitsWhenUserDeclinesDevCheckout
+Test-SyncDevSuggestsNoCommitMergeForManualReview
 Test-SyncUpstreamPushFailureDoesNotReportComplete
 Test-SyncUpstreamDetachedHeadDoesNotStashPopOnMain
 
