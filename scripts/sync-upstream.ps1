@@ -21,6 +21,12 @@ if ($LASTEXITCODE -ne 0) {
 # ── 保存现场 ──────────────────────────────────────────
 
 $originalBranch = git branch --show-current
+if (-not $originalBranch) {
+    Write-Err "当前处于 detached HEAD,无法安全恢复现场"
+    Write-Info "请先切换到具体分支后重试"
+    exit 1
+}
+
 $stashed = $false
 
 # 检查是否有未提交的改动
@@ -40,6 +46,7 @@ if ($status) {
 
 $syncedCount = 0
 $failed = $false
+$pushFailed = $false
 
 try {
     # 1. 切换到 main
@@ -52,7 +59,7 @@ try {
 
     # 2. 拉取上游
     Write-Info "从 upstream 拉取最新代码..."
-    git fetch upstream 2>&1 | Out-Null
+    git fetch upstream > $null 2> $null
     if ($LASTEXITCODE -ne 0) {
         Write-Err "fetch upstream 失败,请检查网络连接"
         $failed = $true; return
@@ -77,26 +84,35 @@ try {
 
     # 5. 推送到 fork
     Write-Info "推送到 origin/main..."
-    git push origin main 2>&1 | Out-Null
+    git push origin main > $null 2> $null
     if ($LASTEXITCODE -ne 0) {
         Write-Warn "推送到 origin 失败,但本地 main 已更新"
         Write-Info "你可以稍后手动执行: git push origin main"
+        $pushFailed = $true
     }
 
 } finally {
     # ── 恢复现场 ──────────────────────────────────────
 
+    $restoredBranch = $true
     if ($originalBranch -and $originalBranch -ne "main") {
         Write-Info "切回 $originalBranch 分支..."
         git checkout $originalBranch
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warn "切回 $originalBranch 分支失败,为避免把 stash 恢复到错误分支,请手动处理"
+            $restoredBranch = $false
+            $failed = $true
+        }
     }
 
-    if ($stashed) {
+    if ($stashed -and $restoredBranch) {
         Write-Info "恢复 stash 暂存..."
         git stash pop
         if ($LASTEXITCODE -ne 0) {
             Write-Warn "stash pop 失败,请手动执行: git stash pop"
         }
+    } elseif ($stashed) {
+        Write-Warn "未自动恢复 stash,请确认当前分支后手动执行: git stash pop"
     }
 
     # ── 结果摘要 ──────────────────────────────────────
@@ -104,6 +120,9 @@ try {
     Write-Host ""
     if ($failed) {
         Write-Err "同步未完成,请根据上方提示处理"
+    } elseif ($pushFailed) {
+        Write-Warn "本地 main 已更新,但推送到 origin/main 未完成"
+        Write-Info "请稍后手动执行: git push origin main"
     } elseif ($syncedCount -gt 0) {
         Write-Host "  ╔══════════════════════════════════════╗" -ForegroundColor Green
         Write-Host "  ║  同步完成                             ║" -ForegroundColor Green
@@ -111,5 +130,9 @@ try {
         Write-Host "  ║  新同步提交: $syncedCount 个" -ForegroundColor Green
         Write-Host "  ║  main 已与 upstream/main 一致        ║" -ForegroundColor Green
         Write-Host "  ╚══════════════════════════════════════╝" -ForegroundColor Green
+    }
+
+    if ($failed -or $pushFailed) {
+        exit 1
     }
 }

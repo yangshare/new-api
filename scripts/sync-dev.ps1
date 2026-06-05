@@ -31,7 +31,8 @@ if ($currentBranch -ne "dev") {
         }
         $currentBranch = "dev"
     } else {
-        Write-Info "保持当前分支,继续拉取上游更新..."
+        Write-Warn "已取消 dev 分支同步,当前仍在 $currentBranch 分支"
+        exit 1
     }
 }
 
@@ -56,7 +57,7 @@ if ($status) {
 try {
     # 1. 拉取上游
     Write-Info "从 upstream 拉取最新代码..."
-    git fetch upstream 2>&1 | Out-Null
+    git fetch upstream > $null 2> $null
     if ($LASTEXITCODE -ne 0) {
         Write-Err "fetch upstream 失败,请检查网络连接"
         exit 1
