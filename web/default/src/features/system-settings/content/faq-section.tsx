@@ -349,7 +349,7 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className='max-w-2xl'>
+        <DialogContent className='sm:max-w-2xl'>
           <DialogHeader>
             <DialogTitle>
               {editingFaq ? t('Edit FAQ') : t('Add FAQ')}

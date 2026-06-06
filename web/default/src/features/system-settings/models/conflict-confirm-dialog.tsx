@@ -61,7 +61,7 @@ export function ConflictConfirmDialog({
   const { t } = useTranslation()
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className='max-w-4xl'>
+      <AlertDialogContent className='w-[calc(100vw-2rem)] !max-w-4xl'>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('Confirm Billing Conflicts')}</AlertDialogTitle>
           <AlertDialogDescription>

@@ -231,7 +231,7 @@ export function RuleEditorDialog(props: Props) {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className='max-h-[85vh] max-w-2xl overflow-y-auto'>
+      <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-2xl'>
         <DialogHeader>
           <DialogTitle>{isEdit ? t('Edit Rule') : t('Add Rule')}</DialogTitle>
         </DialogHeader>

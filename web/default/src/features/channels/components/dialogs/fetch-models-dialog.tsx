@@ -367,7 +367,7 @@ export function FetchModelsDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className='max-w-3xl'>
+      <DialogContent className='sm:max-w-3xl'>
         <DialogHeader>
           <DialogTitle>{t('Fetch Models')}</DialogTitle>
           <DialogDescription>

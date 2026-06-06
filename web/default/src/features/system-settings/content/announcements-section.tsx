@@ -461,7 +461,7 @@ export function AnnouncementsSection({
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className='max-w-2xl'>
+        <DialogContent className='sm:max-w-2xl'>
           <DialogHeader>
             <DialogTitle>
               {editingAnnouncement
