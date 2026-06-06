@@ -16,16 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  forwardRef,
-  type Ref,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -126,23 +117,17 @@ export type ModelRatioData = {
 type ModelPricingSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (data: ModelRatioData) => Partial<Record<string, string>> | void
-  onDraftChange?: (data: ModelRatioData) => void
+  onSave: (data: ModelRatioData) => void
   onCancel?: () => void
   editData?: ModelRatioData | null
   selectedTargetCount?: number
-  editorRef?: Ref<ModelPricingEditorPanelRef>
 }
 
 type ModelPricingEditorPanelProps = Omit<
   ModelPricingSheetProps,
-  'open' | 'onOpenChange' | 'editorRef'
+  'open' | 'onOpenChange'
 > & {
   className?: string
-}
-
-export type ModelPricingEditorPanelRef = {
-  submitDraft: () => Promise<Partial<Record<string, string>> | false>
 }
 
 type PreviewRow = {
@@ -396,11 +381,9 @@ export function ModelPricingSheet({
   open,
   onOpenChange,
   onSave,
-  onDraftChange,
   onCancel,
   editData,
   selectedTargetCount = 0,
-  editorRef,
 }: ModelPricingSheetProps) {
   const { t } = useTranslation()
   const title = editData ? t('Edit model pricing') : t('Add model pricing')
@@ -417,13 +400,7 @@ export function ModelPricingSheet({
           <SheetDescription>{description}</SheetDescription>
         </SheetHeader>
         <ModelPricingEditorPanel
-          ref={editorRef}
-          onSave={(data) => {
-            const saved = onSave(data)
-            onOpenChange(false)
-            return saved
-          }}
-          onDraftChange={onDraftChange}
+          onSave={onSave}
           editData={editData}
           selectedTargetCount={selectedTargetCount}
           onCancel={() => {
@@ -437,20 +414,13 @@ export function ModelPricingSheet({
   )
 }
 
-export const ModelPricingEditorPanel = forwardRef<
-  ModelPricingEditorPanelRef,
-  ModelPricingEditorPanelProps
->(function ModelPricingEditorPanel(
-  {
-    onSave,
-    onDraftChange,
-    editData,
-    selectedTargetCount = 0,
-    onCancel,
-    className,
-  },
-  ref
-) {
+export function ModelPricingEditorPanel({
+  onSave,
+  editData,
+  selectedTargetCount = 0,
+  onCancel,
+  className,
+}: ModelPricingEditorPanelProps) {
   const { t } = useTranslation()
   const [pricingMode, setPricingMode] = useState<PricingMode>('per-token')
   const [promptPrice, setPromptPrice] = useState('')
@@ -463,7 +433,6 @@ export const ModelPricingEditorPanel = forwardRef<
   const [billingExpr, setBillingExpr] = useState('')
   const [requestRuleExpr, setRequestRuleExpr] = useState('')
   const [previewOpen, setPreviewOpen] = useState(true)
-  const lastDraftSignatureRef = useRef('')
   const isEditMode = !!editData
 
   const form = useForm<ModelPricingFormValues>({
@@ -718,139 +687,53 @@ export const ModelPricingEditorPanel = forwardRef<
     return nextWarnings
   }, [editData, laneEnabled, lanePrices, pricingMode, promptPrice, t])
 
-  const buildDraftData = useCallback(
-    (values: ModelPricingFormValues) => {
-      const name = values.name.trim()
-      if (!name) return null
+  const handleSubmit = (values: ModelPricingFormValues) => {
+    if (
+      pricingMode === 'per-token' &&
+      toNumberOrNull(promptPrice) === null &&
+      laneConfigs.some(
+        ({ key }) => laneEnabled[key] && hasValue(lanePrices[key])
+      )
+    ) {
+      form.setError('ratio', {
+        message: t('Input price is required before saving dependent prices.'),
+      })
+      return
+    }
 
-      if (
-        pricingMode === 'per-token' &&
-        toNumberOrNull(promptPrice) === null &&
-        laneConfigs.some(
-          ({ key }) => laneEnabled[key] && hasValue(lanePrices[key])
-        )
-      ) {
-        return null
-      }
+    if (
+      pricingMode === 'per-token' &&
+      laneEnabled.audioOutput &&
+      !hasValue(lanePrices.audioInput)
+    ) {
+      form.setError('audioRatio', {
+        message: t('Audio output price requires an audio input price.'),
+      })
+      return
+    }
 
-      if (
-        pricingMode === 'per-token' &&
-        laneEnabled.audioOutput &&
-        !hasValue(lanePrices.audioInput)
-      ) {
-        return null
-      }
+    const data: ModelRatioData = {
+      name: values.name.trim(),
+      billingMode: pricingMode,
+      price: values.price || '',
+      ratio: values.ratio || '',
+      cacheRatio: values.cacheRatio || '',
+      createCacheRatio: values.createCacheRatio || '',
+      completionRatio: values.completionRatio || '',
+      imageRatio: values.imageRatio || '',
+      audioRatio: values.audioRatio || '',
+      audioCompletionRatio: values.audioCompletionRatio || '',
+    }
 
-      const data: ModelRatioData = {
-        name,
-        billingMode: pricingMode,
-        price: values.price || '',
-        ratio: values.ratio || '',
-        cacheRatio: values.cacheRatio || '',
-        createCacheRatio: values.createCacheRatio || '',
-        completionRatio: values.completionRatio || '',
-        imageRatio: values.imageRatio || '',
-        audioRatio: values.audioRatio || '',
-        audioCompletionRatio: values.audioCompletionRatio || '',
-      }
+    if (pricingMode === 'tiered_expr') {
+      data.billingExpr = billingExpr
+      data.requestRuleExpr = requestRuleExpr
+    }
 
-      if (pricingMode === 'tiered_expr') {
-        data.billingExpr = billingExpr
-        data.requestRuleExpr = requestRuleExpr
-      }
-
-      return data
-    },
-    [
-      billingExpr,
-      laneEnabled,
-      lanePrices,
-      pricingMode,
-      promptPrice,
-      requestRuleExpr,
-    ]
-  )
-
-  useEffect(() => {
-    if (!onDraftChange) return
-
-    const data = buildDraftData(watchedValues)
-    if (!data) return
-
-    const signature = JSON.stringify(data)
-    if (signature === lastDraftSignatureRef.current) return
-
-    lastDraftSignatureRef.current = signature
-    onDraftChange(data)
-  }, [buildDraftData, onDraftChange, watchedValues])
-
-  const handleSubmit = useCallback(
-    (values: ModelPricingFormValues) => {
-      if (
-        pricingMode === 'per-token' &&
-        toNumberOrNull(promptPrice) === null &&
-        laneConfigs.some(
-          ({ key }) => laneEnabled[key] && hasValue(lanePrices[key])
-        )
-      ) {
-        form.setError('ratio', {
-          message: t('Input price is required before saving dependent prices.'),
-        })
-        return false
-      }
-
-      if (
-        pricingMode === 'per-token' &&
-        laneEnabled.audioOutput &&
-        !hasValue(lanePrices.audioInput)
-      ) {
-        form.setError('audioRatio', {
-          message: t('Audio output price requires an audio input price.'),
-        })
-        return false
-      }
-
-      const data = buildDraftData(values)
-      if (!data) return false
-
-      const saved = onSave(data)
-      form.reset()
-      onCancel?.()
-      return saved ?? data
-    },
-    [
-      buildDraftData,
-      form,
-      laneEnabled,
-      lanePrices,
-      onCancel,
-      onSave,
-      pricingMode,
-      promptPrice,
-      t,
-    ]
-  )
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      submitDraft: () =>
-        new Promise<Partial<Record<string, string>> | false>((resolve) => {
-          void form.handleSubmit(
-            (values) => {
-              const result = handleSubmit(values)
-              resolve(
-                result === false ? false : (result as Record<string, string>)
-              )
-            },
-            () => {
-              resolve(false)
-            }
-          )()
-        }),
-    }),
-    [form, handleSubmit]
-  )
+    onSave(data)
+    form.reset()
+    onCancel?.()
+  }
 
   const activeName = watchedValues.name || editData?.name || t('New model')
 
@@ -1088,13 +971,16 @@ export const ModelPricingEditorPanel = forwardRef<
               <Button type='button' variant='outline' onClick={onCancel}>
                 {t('Cancel')}
               </Button>
+              <Button type='submit'>
+                {isEditMode ? t('Update') : t('Add')}
+              </Button>
             </div>
           </SheetFooter>
         </form>
       </Form>
     </div>
   )
-})
+}
 
 function PriceInput(props: {
   value: string

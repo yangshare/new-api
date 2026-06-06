@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { memo, useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { type UseFormReturn } from 'react-hook-form'
 import { Code2, Eye } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -38,11 +38,7 @@ import {
   SettingsSwitchItem,
 } from '../components/settings-form-layout'
 import { SettingsPageActionsPortal } from '../components/settings-page-context'
-import { saveModelRatioFormWithDraftCommit } from './model-ratio-form-save'
-import {
-  ModelRatioVisualEditor,
-  type ModelRatioVisualEditorRef,
-} from './model-ratio-visual-editor'
+import { ModelRatioVisualEditor } from './model-ratio-visual-editor'
 
 type ModelFormValues = {
   ModelPrice: string
@@ -75,7 +71,6 @@ export const ModelRatioForm = memo(function ModelRatioForm({
 }: ModelRatioFormProps) {
   const { t } = useTranslation()
   const [editMode, setEditMode] = useState<'visual' | 'json'>('visual')
-  const visualEditorRef = useRef<ModelRatioVisualEditorRef>(null)
 
   const handleFieldChange = useCallback(
     (field: keyof ModelFormValues, value: string) => {
@@ -90,17 +85,6 @@ export const ModelRatioForm = memo(function ModelRatioForm({
   const toggleEditMode = useCallback(() => {
     setEditMode((prev) => (prev === 'visual' ? 'json' : 'visual'))
   }, [])
-
-  const handleSaveClick = useCallback(() => {
-    void saveModelRatioFormWithDraftCommit<ModelFormValues>({
-      editMode,
-      commitDraft: () =>
-        visualEditorRef.current?.commitDraft() ?? Promise.resolve(true),
-      getValues: () => form.getValues(),
-      submitValues: (values) => onSave(values as ModelFormValues),
-      submitForm: form.handleSubmit(onSave),
-    })
-  }, [editMode, form, onSave])
 
   return (
     <div className='space-y-6'>
@@ -134,7 +118,7 @@ export const ModelRatioForm = memo(function ModelRatioForm({
           <Button
             type='button'
             size='sm'
-            onClick={handleSaveClick}
+            onClick={form.handleSubmit(onSave)}
             disabled={isSaving}
           >
             {isSaving ? t('Saving...') : t('Save model prices')}
@@ -143,7 +127,6 @@ export const ModelRatioForm = memo(function ModelRatioForm({
         {editMode === 'visual' ? (
           <div className='space-y-6'>
             <ModelRatioVisualEditor
-              ref={visualEditorRef}
               modelPrice={form.watch('ModelPrice')}
               modelRatio={form.watch('ModelRatio')}
               cacheRatio={form.watch('CacheRatio')}
