@@ -56,15 +56,11 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  sideDrawerContentClassName,
-  sideDrawerFooterClassName,
-} from '@/components/drawer-layout'
+import { sideDrawerContentClassName } from '@/components/drawer-layout'
 import { combineBillingExpr } from '@/features/pricing/lib/billing-expr'
 import {
   SettingsControlGroup,
@@ -744,28 +740,47 @@ export function ModelPricingEditorPanel({
         className
       )}
     >
-      <div className='border-b p-4'>
-        <div className='flex flex-wrap items-start justify-between gap-3'>
-          <div className='min-w-0'>
-            <h3 className='truncate text-base font-medium'>
-              {isEditMode ? t('Edit model pricing') : t('Add model pricing')}
-            </h3>
-            <p className='text-muted-foreground truncate text-sm'>
-              {activeName}
-            </p>
-          </div>
-          <Badge variant={getModeBadgeVariant(pricingMode)}>
-            {t(getModeLabel(pricingMode))}
-          </Badge>
-        </div>
-      </div>
-
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className='flex min-h-0 flex-1 flex-col'
           autoComplete='off'
         >
+          <div className='border-b p-4'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div className='min-w-0 flex-1'>
+                <h3 className='truncate text-base font-medium'>
+                  {isEditMode ? t('Edit model pricing') : t('Add model pricing')}
+                </h3>
+                <p className='text-muted-foreground truncate text-sm'>
+                  {activeName}
+                </p>
+              </div>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant={getModeBadgeVariant(pricingMode)}>
+                  {t(getModeLabel(pricingMode))}
+                </Badge>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={onCancel}
+                  size='sm'
+                >
+                  {t('Cancel')}
+                </Button>
+                <Button type='submit' size='sm'>
+                  {isEditMode ? t('Update') : t('Add')}
+                </Button>
+              </div>
+            </div>
+            <div className='text-muted-foreground mt-2 text-xs'>
+              {selectedTargetCount > 0
+                ? t('{{count}} selected targets available for bulk copy.', {
+                    count: selectedTargetCount,
+                  })
+                : t('Changes are written to the settings draft on save.')}
+            </div>
+          </div>
           <div className='min-h-0 flex-1 overflow-y-auto p-4'>
             <FieldGroup>
               {warnings.length > 0 && (
@@ -954,28 +969,6 @@ export function ModelPricingEditorPanel({
               </Collapsible>
             </FieldGroup>
           </div>
-
-          <SheetFooter
-            className={sideDrawerFooterClassName(
-              'grid-cols-1 sm:items-center sm:justify-between'
-            )}
-          >
-            <div className='text-muted-foreground text-xs'>
-              {selectedTargetCount > 0
-                ? t('{{count}} selected targets available for bulk copy.', {
-                    count: selectedTargetCount,
-                  })
-                : t('Changes are written to the settings draft on save.')}
-            </div>
-            <div className='flex justify-end gap-2'>
-              <Button type='button' variant='outline' onClick={onCancel}>
-                {t('Cancel')}
-              </Button>
-              <Button type='submit'>
-                {isEditMode ? t('Update') : t('Add')}
-              </Button>
-            </div>
-          </SheetFooter>
         </form>
       </Form>
     </div>
