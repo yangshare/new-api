@@ -106,6 +106,22 @@ export function parseLogOther(other: string): LogOtherData | null {
 }
 
 /**
+ * Extract the selected multi-key index from parsed log metadata.
+ *
+ * The value is a key-list index, not a database ID or secret key content.
+ */
+export function getMultiKeyIndex(
+  other: LogOtherData | null | undefined
+): number | null {
+  if (other?.admin_info?.is_multi_key !== true) return null
+
+  const index = other.admin_info.multi_key_index
+  if (typeof index !== 'number' || !Number.isFinite(index)) return null
+
+  return index
+}
+
+/**
  * Get time color based on duration (in seconds)
  */
 export function getTimeColor(
