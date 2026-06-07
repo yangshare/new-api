@@ -28,6 +28,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { resetModelRatios } from '../api'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
+import { didAllOptionUpdatesSucceed } from '../lib/update-option-results'
 import { GroupRatioForm } from './group-ratio-form'
 import { ModelRatioForm } from './model-ratio-form'
 import { ToolPriceSettings } from './tool-price-settings'
@@ -391,9 +392,19 @@ export function RatioSettingsCard({
         return
       }
 
+      const results = []
       for (const key of updates) {
         const apiKey = apiKeyMap[key as string] || (key as string)
-        await updateOption.mutateAsync({ key: apiKey, value: normalized[key] })
+        const result = await updateOption.mutateAsync({
+          key: apiKey,
+          value: normalized[key],
+          silent: true,
+        })
+        results.push(result)
+        if (!result.success) return
+      }
+      if (didAllOptionUpdatesSucceed(results)) {
+        toast.success(t('Setting updated successfully'))
       }
     },
     [t, updateOption]
@@ -425,12 +436,22 @@ export function RatioSettingsCard({
         (key) => normalized[key] !== groupNormalizedDefaults.current[key]
       )
 
+      const results = []
       for (const key of updates) {
         const apiKey = apiKeyMap[key] || key
-        await updateOption.mutateAsync({ key: apiKey, value: normalized[key] })
+        const result = await updateOption.mutateAsync({
+          key: apiKey,
+          value: normalized[key],
+          silent: true,
+        })
+        results.push(result)
+        if (!result.success) return
+      }
+      if (didAllOptionUpdatesSucceed(results)) {
+        toast.success(t('Setting updated successfully'))
       }
     },
-    [updateOption]
+    [t, updateOption]
   )
 
   const handleResetRatios = useCallback(() => {
