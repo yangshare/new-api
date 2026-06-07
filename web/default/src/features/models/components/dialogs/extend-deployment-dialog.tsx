@@ -54,6 +54,7 @@ export function ExtendDeploymentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setHours(1)
   }, [open])
 

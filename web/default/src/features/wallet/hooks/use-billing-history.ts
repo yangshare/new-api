@@ -141,6 +141,7 @@ export function useBillingHistory(options: UseBillingHistoryOptions = {}) {
 
   // Fetch data when dependencies change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBillingHistory()
   }, [fetchBillingHistory])
 

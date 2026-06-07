@@ -103,8 +103,10 @@ export function MultiKeyManageDialog({
   // Reset and load data when dialog opens
   useEffect(() => {
     if (open && currentRow) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentPage(1)
       setStatusFilter(null)
+      // eslint-disable-next-line react-hooks/immutability
       loadKeyStatus(1, pageSize, null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

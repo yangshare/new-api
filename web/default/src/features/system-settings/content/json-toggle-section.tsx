@@ -165,6 +165,7 @@ export function JsonToggleSection({
         {/* eslint-disable-next-line react-hooks/refs */}
         <SettingsForm onSubmit={form.handleSubmit(onSubmit)}>
           <SettingsPageFormActions
+            // eslint-disable-next-line react-hooks/refs
             onSave={form.handleSubmit(onSubmit)}
             isSaving={updateOption.isPending}
             saveLabel={submitLabel}

@@ -86,6 +86,7 @@ export function AccountBindingsTab({
   }, [customProviders])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCustomBindings()
   }, [fetchCustomBindings])
 
@@ -115,6 +116,7 @@ export function AccountBindingsTab({
 
   const handleBindCustomOAuth = (provider: { id: string; name: string }) => {
     const redirectUrl = `${window.location.origin}/oauth/${provider.id}?bind=true`
+    // eslint-disable-next-line react-hooks/immutability
     window.location.href = `/api/oauth/${provider.id}?redirect=${encodeURIComponent(redirectUrl)}`
   }
 

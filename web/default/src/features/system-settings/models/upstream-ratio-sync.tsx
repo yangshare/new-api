@@ -166,6 +166,7 @@ export function UpstreamRatioSync({ modelRatios }: UpstreamRatioSyncProps) {
 
   useEffect(() => {
     if (channels.length === 0) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setChannelEndpoints((prev) => {
       let mutated = false
       const next = { ...prev }

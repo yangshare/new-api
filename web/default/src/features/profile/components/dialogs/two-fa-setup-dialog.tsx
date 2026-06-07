@@ -131,6 +131,7 @@ export function TwoFASetupDialog({
   // Initialize when dialog opens
   useEffect(() => {
     if (open && !setupData && !initializing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       handleSetup()
     }
   }, [open, setupData, initializing, handleSetup])

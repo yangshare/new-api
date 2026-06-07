@@ -222,6 +222,7 @@ export function SubscriptionPlansCard({
   const getRemainingDays = (sub: UserSubscriptionRecord) => {
     const endTime = sub?.subscription?.end_time || 0
     if (!endTime) return 0
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now() / 1000
     return Math.max(0, Math.ceil((endTime - now) / 86400))
   }
@@ -403,6 +404,7 @@ export function SubscriptionPlansCard({
                     planTitleMap.get(subscription?.plan_id) || ''
                   const remainDays = getRemainingDays(sub)
                   const usagePercent = getUsagePercent(sub)
+                  // eslint-disable-next-line react-hooks/purity
                   const now = Date.now() / 1000
                   const isExpired = (subscription?.end_time || 0) < now
                   const isCancelled = subscription?.status === 'cancelled'

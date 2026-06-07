@@ -79,6 +79,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
 
   useEffect(() => {
     if (props.open && props.epayMethods && props.epayMethods.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedEpayMethod(props.epayMethods[0].type)
     } else if (!props.open) {
       setSelectedEpayMethod('')
@@ -356,7 +357,10 @@ export function SubscriptionPurchaseDialog(props: Props) {
               variant='outline'
               onClick={handlePayBalance}
               disabled={
-                paying || limitReached || !allowBalancePay || insufficientBalance
+                paying ||
+                limitReached ||
+                !allowBalancePay ||
+                insufficientBalance
               }
             >
               {t('Pay with Balance')}

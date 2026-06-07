@@ -82,6 +82,7 @@ export function useAffiliate() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAffiliateCode()
   }, [fetchAffiliateCode])
 

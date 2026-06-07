@@ -101,14 +101,19 @@ export function EditTagDialog({ open, onOpenChange }: EditTagDialogProps) {
   // Initialize form when tag changes
   useEffect(() => {
     if (open && currentTag) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNewTag(currentTag)
+
       setModelMapping('')
+
       setSelectedGroups([])
+
       setCustomModel('')
 
       // Load tag models
       if (tagModelsData?.data) {
         const models = tagModelsData.data.split(',').filter(Boolean)
+
         setSelectedModels(models)
       } else {
         setSelectedModels([])

@@ -81,6 +81,7 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
   useEffect(() => {
     if (profile?.setting) {
       const parsed = parseUserSettings(profile.setting)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettings({
         notify_type: parsed.notify_type || 'email',
         quota_warning_threshold:

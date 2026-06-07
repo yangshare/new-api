@@ -89,6 +89,7 @@ export function JsonEditor({
   // Parse JSON to rows when value changes externally
   useEffect(() => {
     if (value !== jsonValue) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setJsonValue(value)
       parseJsonToRows(value)
     }

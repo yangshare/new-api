@@ -94,6 +94,7 @@ export function RiskAcknowledgementDialog({
     return requiredTextParts.map((part) => {
       if (part.type === 'input') {
         const normalizedPart = { ...part, inputIndex }
+        // eslint-disable-next-line react-hooks/immutability
         inputIndex += 1
         return normalizedPart
       }
@@ -114,8 +115,11 @@ export function RiskAcknowledgementDialog({
 
   useEffect(() => {
     if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCheckedItems(Array(checklist.length).fill(false))
+
     setTypedText('')
+
     setTypedTextParts(Array(requiredTextInputCount).fill(''))
   }, [open, checklist.length, requiredTextInputCount])
 

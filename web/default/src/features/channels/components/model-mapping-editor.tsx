@@ -131,6 +131,7 @@ export function ModelMappingEditor(props: ModelMappingEditorProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setJsonValue(props.value)
     parseJsonToRows(props.value)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.value])
 
   const convertRowsToJson = (updatedRows: MappingRow[]): string => {

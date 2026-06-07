@@ -1122,17 +1122,29 @@ export function ParamOverrideEditorDialog(
   useEffect(() => {
     if (!props.open) return
     const state = parseInitialState(props.value)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditMode(state.editMode)
+
     setVisualMode(state.visualMode)
+
     setLegacyValue(state.legacyValue)
+
     setOperations(state.operations)
+
     setJsonText(state.jsonText)
+
     setJsonError(state.jsonError)
+
     setOperationSearch('')
+
     setSelectedOperationId(state.operations[0]?.id || '')
+
     setExpandedConditions({})
+
     setDraggedOperationId('')
+
     setDragOverOperationId('')
+
     setDragOverPosition('before')
     if (state.visualMode === 'legacy') {
       setTemplatePresetKey('legacy_default')
@@ -1144,6 +1156,7 @@ export function ParamOverrideEditorDialog(
   // Keep selectedOperationId valid
   useEffect(() => {
     if (operations.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOperationId('')
       return
     }

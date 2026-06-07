@@ -69,10 +69,12 @@ export function SyncWizardDialog({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocale(syncWizardOptions.locale || 'zh')
       const preferredSource = SYNC_SOURCE_OPTIONS.find(
         (option) => option.value === syncWizardOptions.source
       )
+
       setSource(
         preferredSource && !preferredSource.disabled
           ? (preferredSource.value as SyncSource)

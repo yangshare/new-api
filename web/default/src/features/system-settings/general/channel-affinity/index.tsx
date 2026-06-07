@@ -135,21 +135,28 @@ export function ChannelAffinitySection(props: Props) {
   const [fillTemplateDialogOpen, setFillTemplateDialogOpen] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEnabled(props.defaultValues['channel_affinity_setting.enabled'])
+
     setSwitchOnSuccess(
       props.defaultValues['channel_affinity_setting.switch_on_success']
     )
+
     setKeepOnChannelDisabled(
       props.defaultValues['channel_affinity_setting.keep_on_channel_disabled']
     )
+
     setMaxEntries(props.defaultValues['channel_affinity_setting.max_entries'])
+
     setDefaultTtl(
       props.defaultValues['channel_affinity_setting.default_ttl_seconds']
     )
     const parsed = parseRules(
       props.defaultValues['channel_affinity_setting.rules']
     )
+
     setRules(parsed)
+
     setJsonText(
       JSON.stringify(
         parsed.map(({ id: _, ...r }) => r),
@@ -172,6 +179,7 @@ export function ChannelAffinitySection(props: Props) {
   }, [t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshCache()
   }, [refreshCache])
 

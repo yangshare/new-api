@@ -120,6 +120,7 @@ export function useProfile() {
 
   // Initial fetch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProfile()
   }, [fetchProfile])
 

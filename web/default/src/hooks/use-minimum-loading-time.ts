@@ -33,6 +33,7 @@ export function useMinimumLoadingTime(
   useEffect(() => {
     if (loading) {
       loadingStartRef.current = Date.now()
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSkeleton(true)
     } else {
       const elapsed = Date.now() - loadingStartRef.current

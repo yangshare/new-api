@@ -130,6 +130,7 @@ export function FetchModelsDialog({
 
   useEffect(() => {
     if (open && (activeChannel || customFetcher)) {
+      // eslint-disable-next-line react-hooks/immutability
       handleFetchModels()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

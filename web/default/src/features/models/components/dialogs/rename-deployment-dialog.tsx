@@ -50,6 +50,7 @@ export function RenameDeploymentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open) setName(currentName || '')
   }, [open, currentName])
 

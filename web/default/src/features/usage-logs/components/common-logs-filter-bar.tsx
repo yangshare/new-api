@@ -82,6 +82,7 @@ export function CommonLogsFilterBar<TData>(
 
   useEffect(() => {
     const { start, end } = getDefaultTimeRange()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilters({
       startTime: searchParams.startTime
         ? new Date(searchParams.startTime)

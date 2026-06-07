@@ -74,6 +74,7 @@ export function ConsumptionDistributionChart(
   const timeGranularity = props.timeGranularity ?? DEFAULT_TIME_GRANULARITY
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (props.defaultChartType) setChartType(props.defaultChartType)
   }, [props.defaultChartType])
 

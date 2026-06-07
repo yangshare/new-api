@@ -113,15 +113,19 @@ export function ChannelsTable() {
     ],
   })
 
-  // Extract filters from column filters
-  const statusFilter =
-    (columnFilters.find((f) => f.id === 'status')?.value as string[]) || []
-  const typeFilter =
-    (columnFilters.find((f) => f.id === 'type')?.value as string[]) || []
-  const groupFilter =
-    (columnFilters.find((f) => f.id === 'group')?.value as string[]) || []
-  const modelFilterFromUrl =
-    (columnFilters.find((f) => f.id === 'model')?.value as string) || ''
+  const { statusFilter, typeFilter, groupFilter, modelFilterFromUrl } = useMemo(
+    () => ({
+      statusFilter:
+        (columnFilters.find((f) => f.id === 'status')?.value as string[]) || [],
+      typeFilter:
+        (columnFilters.find((f) => f.id === 'type')?.value as string[]) || [],
+      groupFilter:
+        (columnFilters.find((f) => f.id === 'group')?.value as string[]) || [],
+      modelFilterFromUrl:
+        (columnFilters.find((f) => f.id === 'model')?.value as string) || '',
+    }),
+    [columnFilters]
+  )
 
   // Local state for immediate input feedback
   const [modelFilterInput, setModelFilterInput] = useState(modelFilterFromUrl)

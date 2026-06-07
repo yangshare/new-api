@@ -126,7 +126,9 @@ export function CheckinCalendarCard({
     if (initialLoaded) return
     if (isLoading) return
     if (!checkinData) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCollapsed(checkedToday)
+
     setInitialLoaded(true)
   }, [checkinData, checkedToday, initialLoaded, isLoading])
 

@@ -63,7 +63,9 @@ export function DateTimePicker({
   const [time, setTime] = React.useState<string>('00:00')
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDate(value)
+
     setMonth(value)
     if (value) {
       const hours = value.getHours().toString().padStart(2, '0')

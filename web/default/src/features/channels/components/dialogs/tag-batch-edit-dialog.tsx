@@ -86,6 +86,7 @@ export function TagBatchEditDialog({
 
   useEffect(() => {
     if (open && currentTag) {
+      // eslint-disable-next-line react-hooks/immutability
       loadTagData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

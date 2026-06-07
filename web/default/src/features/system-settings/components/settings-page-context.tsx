@@ -131,6 +131,7 @@ export function SettingsPageFormActions(props: SettingsPageFormActionsProps) {
           <span>{t(props.resetLabel ?? 'Reset')}</span>
         </Button>
       )}
+      {/* eslint-disable react-hooks/refs */}
       <Button
         ref={props.saveButtonRef}
         type='button'
@@ -141,6 +142,7 @@ export function SettingsPageFormActions(props: SettingsPageFormActionsProps) {
         <Save data-icon='inline-start' />
         <span>{t(saveLabel)}</span>
       </Button>
+      {/* eslint-enable react-hooks/refs */}
     </SettingsPageActionsPortal>
   )
 }

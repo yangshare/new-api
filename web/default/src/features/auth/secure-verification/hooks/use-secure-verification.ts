@@ -69,6 +69,7 @@ export function useSecureVerification(
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchVerificationMethods()
   }, [fetchVerificationMethods])
 

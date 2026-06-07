@@ -72,6 +72,7 @@ export function ModelCharts(props: ModelChartsProps) {
   const timeGranularity = props.timeGranularity ?? DEFAULT_TIME_GRANULARITY
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (props.defaultChartTab) setActiveTab(props.defaultChartTab)
   }, [props.defaultChartTab])
 

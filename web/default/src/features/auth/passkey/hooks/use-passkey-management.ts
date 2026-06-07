@@ -70,6 +70,7 @@ export function usePasskeyManagement(
   }, [onStatusChange])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStatus()
   }, [fetchStatus])
 

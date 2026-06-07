@@ -32,6 +32,19 @@ import { Label } from '@/components/ui/label'
 import { getUserInfo } from '../../api'
 import type { UserInfo } from '../../types'
 
+const InfoItem = ({
+  label,
+  value,
+}: {
+  label: string
+  value: string | number
+}) => (
+  <div className='space-y-1.5'>
+    <Label className='text-muted-foreground text-xs'>{label}</Label>
+    <div className='text-sm font-semibold'>{value}</div>
+  </div>
+)
+
 interface UserInfoDialogProps {
   userId: number | null
   open: boolean
@@ -70,22 +83,10 @@ export function UserInfoDialog({
 
   useEffect(() => {
     if (open && userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchUserInfo(userId)
     }
   }, [open, userId, fetchUserInfo])
-
-  const InfoItem = ({
-    label,
-    value,
-  }: {
-    label: string
-    value: string | number
-  }) => (
-    <div className='space-y-1.5'>
-      <Label className='text-muted-foreground text-xs'>{label}</Label>
-      <div className='text-sm font-semibold'>{value}</div>
-    </div>
-  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

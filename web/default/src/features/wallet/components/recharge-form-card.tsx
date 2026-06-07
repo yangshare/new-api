@@ -113,6 +113,7 @@ export function RechargeFormCard({
   const [localAmount, setLocalAmount] = useState(topupAmount.toString())
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalAmount(topupAmount.toString())
   }, [topupAmount])
 

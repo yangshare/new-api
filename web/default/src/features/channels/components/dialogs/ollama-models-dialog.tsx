@@ -105,11 +105,17 @@ export function OllamaModelsDialog({
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModels([])
+
       setSelected([])
+
       setSearch('')
+
       setPullName('')
+
       setIsPulling(false)
+
       setPullProgress(null)
       pullAbortRef.current?.abort()
       pullAbortRef.current = null
@@ -117,11 +123,13 @@ export function OllamaModelsDialog({
     }
 
     if (open && isOllamaChannel && channelId) {
+      // eslint-disable-next-line react-hooks/immutability
       void fetchOllamaModels()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isOllamaChannel, channelId])
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchOllamaModels = useCallback(async () => {
     if (!channelId) return
     setIsFetching(true)

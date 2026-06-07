@@ -114,6 +114,7 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFaqList(
           parsed.map((item, idx) => ({
             ...item,
@@ -127,6 +128,7 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
   }, [data])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 

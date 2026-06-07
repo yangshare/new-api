@@ -123,6 +123,7 @@ export function UptimeKumaSection({ enabled, data }: UptimeKumaSectionProps) {
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setGroups(
           parsed.map((item, idx) => ({
             ...item,
@@ -136,6 +137,7 @@ export function UptimeKumaSection({ enabled, data }: UptimeKumaSectionProps) {
   }, [data])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 

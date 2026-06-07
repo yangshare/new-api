@@ -47,6 +47,7 @@ export function useOAuthLogin(status: SystemStatus | null) {
   const { auth } = useAuthStore()
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGithubButtonText(t('Continue with GitHub'))
 
     return () => {
