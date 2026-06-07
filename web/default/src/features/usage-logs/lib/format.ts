@@ -116,7 +116,14 @@ export function getMultiKeyIndex(
   if (other?.admin_info?.is_multi_key !== true) return null
 
   const index = other.admin_info.multi_key_index
-  if (typeof index !== 'number' || !Number.isFinite(index)) return null
+  if (
+    typeof index !== 'number' ||
+    !Number.isFinite(index) ||
+    !Number.isInteger(index) ||
+    index < 0
+  ) {
+    return null
+  }
 
   return index
 }

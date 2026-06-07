@@ -77,4 +77,25 @@ describe('getMultiKeyIndex', () => {
       null
     )
   })
+
+  test('hides negative and fractional indexes', () => {
+    assert.equal(
+      getMultiKeyIndex({
+        admin_info: {
+          is_multi_key: true,
+          multi_key_index: -1,
+        },
+      }),
+      null
+    )
+    assert.equal(
+      getMultiKeyIndex({
+        admin_info: {
+          is_multi_key: true,
+          multi_key_index: 1.5,
+        },
+      }),
+      null
+    )
+  })
 })
