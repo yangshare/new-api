@@ -47,6 +47,7 @@ import {
   hasAnyCacheTokens,
   parseLogOther,
   isViolationFeeLog,
+  getMultiKeyIndex,
 } from '../../lib/format'
 import {
   isDisplayableLogType,
@@ -314,6 +315,13 @@ export function useCommonLogsColumns(isAdmin: boolean): ColumnDef<UsageLog>[] {
           if (!isDisplayableLogType(log.type)) return null
 
           const other = parseLogOther(log.other)
+          const multiKeyIndex = getMultiKeyIndex(other)
+          const multiKeyLabel =
+            multiKeyIndex === null ? null : `K${multiKeyIndex}`
+          const multiKeyTitle =
+            multiKeyIndex === null
+              ? undefined
+              : `${t('Key')} ${t('Index')}: ${multiKeyIndex}`
           const affinity = other?.admin_info?.channel_affinity
           const useChannel = other?.admin_info?.use_channel
           const channelChain =
@@ -334,7 +342,7 @@ export function useCommonLogsColumns(isAdmin: boolean): ColumnDef<UsageLog>[] {
                     <div className='flex max-w-[160px] flex-col gap-0.5' />
                   }
                 >
-                  <div className='relative inline-flex w-fit'>
+                  <div className='relative inline-flex w-fit items-center gap-1'>
                     <StatusBadge
                       label={channelIdDisplay}
                       autoColor={String(log.channel)}
@@ -343,6 +351,18 @@ export function useCommonLogsColumns(isAdmin: boolean): ColumnDef<UsageLog>[] {
                       showDot={false}
                       className='font-mono'
                     />
+                    {multiKeyLabel && (
+                      <StatusBadge
+                        label={multiKeyLabel}
+                        variant='neutral'
+                        size='sm'
+                        showDot={false}
+                        copyable={false}
+                        title={multiKeyTitle}
+                        aria-label={multiKeyTitle}
+                        className='border-border/60 bg-muted/40 font-mono'
+                      />
+                    )}
                     {affinity && (
                       <button
                         type='button'
