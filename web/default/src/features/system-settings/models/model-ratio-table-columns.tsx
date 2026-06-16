@@ -81,6 +81,14 @@ export function buildModelRatioColumns({
       cell: ({ row }) => (
         <div className='flex min-w-0 items-center gap-2 font-medium'>
           <span className='min-w-0 truncate'>{row.getValue('name')}</span>
+          {row.original.isDraftChanged && (
+            <StatusBadge
+              label={t('Draft')}
+              variant={row.original.isDraftDeleted ? 'danger' : 'warning'}
+              copyable={false}
+              className='shrink-0'
+            />
+          )}
           {row.original.billingMode === 'tiered_expr' && (
             <StatusBadge
               label={t('Tiered')}
@@ -132,6 +140,28 @@ export function buildModelRatioColumns({
           <span className='text-muted-foreground truncate text-xs'>
             {getPriceDetail(row.original, t)}
           </span>
+          {row.original.isDraftChanged && (
+            <div className='border-warning/45 bg-warning/10 text-foreground mt-1 flex max-w-[360px] flex-col gap-1 rounded-md border px-2.5 py-2 shadow-sm'>
+              <div className='flex items-center gap-2'>
+                <StatusBadge
+                  label={t('Draft')}
+                  variant={row.original.isDraftDeleted ? 'danger' : 'warning'}
+                  copyable={false}
+                  className='bg-background/70 shrink-0'
+                />
+                <span className='truncate text-sm font-medium'>
+                  {row.original.isDraftDeleted
+                    ? t('Will be removed')
+                    : getPriceSummary(row.original.draft ?? row.original, t)}
+                </span>
+              </div>
+              {!row.original.isDraftDeleted && row.original.draft && (
+                <span className='text-muted-foreground truncate text-xs'>
+                  {getPriceDetail(row.original.draft, t)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       ),
       sortingFn: (rowA, rowB) =>
