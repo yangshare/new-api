@@ -53,6 +53,7 @@ import {
   getFirstResponseTimeColor,
   getResponseTimeColor,
   renderAuditContent,
+  getMultiKeyIndex,
 } from '../../lib/format'
 import {
   getLogTypeConfig,
@@ -411,6 +412,13 @@ export function DetailsDialog(props: DetailsDialogProps) {
   const other = parseLogOther(props.log.other)
   const typeConfig = getLogTypeConfig(props.log.type)
 
+  const multiKeyIndex = getMultiKeyIndex(other)
+  const multiKeyLabel = multiKeyIndex === null ? null : `K${multiKeyIndex}`
+  const multiKeyTitle =
+    multiKeyIndex === null
+      ? undefined
+      : `${t('Key')} ${t('Index')}: ${multiKeyIndex}`
+
   const isViolation = isViolationFeeLog(other)
   const isRefund = props.log.type === 6
   const isConsume = props.log.type === 2
@@ -582,13 +590,24 @@ export function DetailsDialog(props: DetailsDialogProps) {
             <DetailRow
               label={t('Channel')}
               value={
-                <span>
-                  {props.log.channel}
+                <span className='inline-flex flex-wrap items-center gap-1'>
+                  <span>{props.log.channel}</span>
                   {props.log.channel_name && (
                     <span className='text-muted-foreground'>
-                      {' '}
                       ({props.log.channel_name})
                     </span>
+                  )}
+                  {multiKeyLabel && (
+                    <StatusBadge
+                      label={multiKeyLabel}
+                      variant='neutral'
+                      size='sm'
+                      showDot={false}
+                      copyable={false}
+                      title={multiKeyTitle}
+                      aria-label={multiKeyTitle}
+                      className='border-border/60 bg-muted/40 font-mono'
+                    />
                   )}
                 </span>
               }
