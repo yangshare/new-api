@@ -52,6 +52,7 @@ import {
   invalidateUserSubscription,
   deleteUserSubscription,
 } from '../../api'
+import { formatQuota } from '@/lib/format'
 import { formatTimestamp } from '../../lib'
 import type { PlanRecord, UserSubscriptionRecord } from '../../types'
 
@@ -303,7 +304,9 @@ export function UserSubscriptionsDialog(props: Props) {
                     const sub = record.subscription
                     const total = Number(sub.amount_total || 0)
                     const used = Number(sub.amount_used || 0)
-                    return total > 0 ? `${used}/${total}` : t('Unlimited')
+                    return total > 0
+                      ? `${formatQuota(used)}/${formatQuota(total)}`
+                      : t('Unlimited')
                   },
                 },
                 {
