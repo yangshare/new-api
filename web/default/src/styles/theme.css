@@ -90,7 +90,8 @@ For commercial licensing, please contact support@quantumnous.com
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
+:root,
+[data-theme-preset='default'] {
   --radius: 1rem;
   --app-header-height: 3rem;
   /* Static build-channel fallback consumed when JS hasn't booted yet. */
@@ -144,7 +145,8 @@ For commercial licensing, please contact support@quantumnous.com
   --skeleton-highlight: oklch(0.985 0 0);
 }
 
-.dark {
+.dark,
+.dark [data-theme-preset='default'] {
   /* OpenAI-like dark mode: nearly black chrome, readable raised surfaces. */
   --background: oklch(0.185 0 0);
   --foreground: oklch(0.965 0 0);
