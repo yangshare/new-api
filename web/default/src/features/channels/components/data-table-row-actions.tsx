@@ -16,7 +16,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useContext, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { type Row } from '@tanstack/react-table'
 import {
@@ -35,7 +34,10 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react'
+import { useContext, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -50,7 +52,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ConfirmDialog } from '@/components/confirm-dialog'
+
 import { MODEL_FETCHABLE_TYPES } from '../constants'
 import {
   channelsQueryKeys,
@@ -96,13 +98,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     e.stopPropagation()
     setIsTesting(true)
     try {
-      await handleTestChannel(
-        channel.id,
-        { channelName: channel.name },
-        () => {
-          queryClient.invalidateQueries({ queryKey: channelsQueryKeys.lists() })
-        }
-      )
+      await handleTestChannel(channel.id, { channelName: channel.name }, () => {
+        queryClient.invalidateQueries({ queryKey: channelsQueryKeys.lists() })
+      })
     } finally {
       setIsTesting(false)
     }

@@ -17,19 +17,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { spawnSync } from 'node:child_process'
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs'
 import { join, relative } from 'node:path'
 
-const mode = process.argv[2]
+const args = new Set(process.argv.slice(2))
+const hasCheck = args.has('--check')
+const hasWrite = args.has('--write')
+const includeAll = args.has('--all')
 
-if (mode !== '--check' && mode !== '--write') {
+if (hasCheck === hasWrite) {
   console.error(
-    'Usage: node scripts/format-with-protected-headers.mjs --check|--write'
+    'Usage: node scripts/format-with-protected-headers.mjs --check|--write [--all]'
   )
   process.exit(2)
 }
 
+const mode = hasCheck ? '--check' : '--write'
 const root = process.cwd()
+const maxFileSize = 10 * 1024 * 1024
 const excludedDirs = new Set([
   '.git',
   '.tanstack',
@@ -71,6 +82,81 @@ function walk(dir, files = []) {
   }
 
   return files
+}
+
+function gitLines(args) {
+  const result = spawnSync('git', args, {
+    cwd: root,
+    encoding: 'utf8',
+  })
+
+  if (result.status !== 0) {
+    return []
+  }
+
+  return result.stdout.split(/\r?\n/).filter(Boolean)
+}
+
+function gitRefExists(ref) {
+  const result = spawnSync('git', ['rev-parse', '--verify', ref], {
+    cwd: root,
+    stdio: 'ignore',
+  })
+
+  return result.status === 0
+}
+
+function addGitFiles(files, args) {
+  for (const file of gitLines(args)) {
+    files.add(join(root, file))
+  }
+}
+
+function collectChangedFiles() {
+  const files = new Set()
+  const base = process.env.FORMAT_BASE || process.env.CHECK_BASE || 'origin/dev'
+
+  if (base && gitRefExists(base)) {
+    addGitFiles(files, [
+      'diff',
+      '--name-only',
+      '--relative',
+      '--diff-filter=ACMR',
+      `${base}...HEAD`,
+      '--',
+      '.',
+    ])
+  }
+
+  addGitFiles(files, [
+    'diff',
+    '--name-only',
+    '--relative',
+    '--diff-filter=ACMR',
+    '--',
+    '.',
+  ])
+  addGitFiles(files, [
+    'diff',
+    '--cached',
+    '--name-only',
+    '--relative',
+    '--diff-filter=ACMR',
+    '--',
+    '.',
+  ])
+  addGitFiles(files, ['ls-files', '--others', '--exclude-standard', '--', '.'])
+
+  return [...files]
+}
+
+function isFormattableCandidate(file) {
+  if (!existsSync(file)) {
+    return false
+  }
+
+  const stats = statSync(file)
+  return stats.isFile() && stats.size < maxFileSize
 }
 
 function snapshotFiles(files) {
@@ -131,18 +217,36 @@ function listChangedFiles(before, files) {
   return changed
 }
 
-const files = walk(root).filter(
-  (file) => statSync(file).size < 10 * 1024 * 1024
+const files = (includeAll ? walk(root) : collectChangedFiles()).filter(
+  isFormattableCandidate
 )
+
+if (files.length === 0) {
+  console.log(
+    mode === '--check'
+      ? 'format: no changed files to check'
+      : 'format: no changed files'
+  )
+  process.exit(0)
+}
+
 const before = mode === '--check' ? snapshotFiles(files) : null
 let headers = new Map()
 let exitCode = 0
 
 try {
   headers = stripProtectedHeaders(files)
+  const targets = includeAll ? ['.'] : files.map((file) => relative(root, file))
   const result = spawnSync(
     'oxfmt',
-    ['-c', '.oxfmtrc.json', '--ignore-path', '.gitignore', '--write', '.'],
+    [
+      '-c',
+      '.oxfmtrc.json',
+      '--ignore-path',
+      '.gitignore',
+      '--write',
+      ...targets,
+    ],
     {
       cwd: root,
       stdio: 'inherit',

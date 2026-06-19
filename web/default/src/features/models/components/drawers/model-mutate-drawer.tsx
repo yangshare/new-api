@@ -16,14 +16,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useState, useCallback, useMemo } from 'react'
-import * as z from 'zod'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, Loader2 } from 'lucide-react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import * as z from 'zod'
+
+import {
+  SideDrawerSection,
+  sideDrawerContentClassName,
+  sideDrawerFooterClassName,
+  sideDrawerFormClassName,
+  sideDrawerHeaderClassName,
+  sideDrawerSwitchItemClassName,
+} from '@/components/drawer-layout'
+import { JsonEditor } from '@/components/json-editor'
+import { TagInput } from '@/components/tag-input'
 import { Button } from '@/components/ui/button'
 import {
   Collapsible,
@@ -62,16 +73,6 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  SideDrawerSection,
-  sideDrawerContentClassName,
-  sideDrawerFooterClassName,
-  sideDrawerFormClassName,
-  sideDrawerHeaderClassName,
-  sideDrawerSwitchItemClassName,
-} from '@/components/drawer-layout'
-import { JsonEditor } from '@/components/json-editor'
-import { TagInput } from '@/components/tag-input'
-import {
   useSystemOptions,
   getOptionValue,
 } from '@/features/system-settings/hooks/use-system-options'
@@ -80,6 +81,7 @@ import { didAllOptionUpdatesSucceed } from '@/features/system-settings/lib/updat
 import { normalizeJsonString } from '@/features/system-settings/models/utils'
 import type { ModelSettings } from '@/features/system-settings/types'
 import { safeJsonParse } from '@/features/system-settings/utils/json-parser'
+
 import { createModel, updateModel, getModel, getVendors } from '../../api'
 import { getNameRuleOptions, ENDPOINT_TEMPLATES } from '../../constants'
 import { modelsQueryKeys, vendorsQueryKeys, parseModelTags } from '../../lib'
@@ -259,7 +261,8 @@ export function ModelMutateDrawer({
       !Number.isNaN(Number.parseFloat(promptPrice)) &&
       Number.parseFloat(promptPrice) > 0
     ) {
-      const completionRatio = Number.parseFloat(value) / Number.parseFloat(promptPrice)
+      const completionRatio =
+        Number.parseFloat(value) / Number.parseFloat(promptPrice)
       form.setValue('completionRatio', completionRatio.toString())
     } else {
       form.setValue('completionRatio', '')
@@ -511,7 +514,9 @@ export function ModelMutateDrawer({
                   ratioMap[finalModelName] = Number.parseFloat(values.ratio)
                 }
                 if (values.cacheRatio && values.cacheRatio !== '') {
-                  cacheMap[finalModelName] = Number.parseFloat(values.cacheRatio)
+                  cacheMap[finalModelName] = Number.parseFloat(
+                    values.cacheRatio
+                  )
                 }
                 if (values.completionRatio && values.completionRatio !== '') {
                   completionMap[finalModelName] = Number.parseFloat(
@@ -519,10 +524,14 @@ export function ModelMutateDrawer({
                   )
                 }
                 if (values.imageRatio && values.imageRatio !== '') {
-                  imageMap[finalModelName] = Number.parseFloat(values.imageRatio)
+                  imageMap[finalModelName] = Number.parseFloat(
+                    values.imageRatio
+                  )
                 }
                 if (values.audioRatio && values.audioRatio !== '') {
-                  audioMap[finalModelName] = Number.parseFloat(values.audioRatio)
+                  audioMap[finalModelName] = Number.parseFloat(
+                    values.audioRatio
+                  )
                 }
                 if (
                   values.audioCompletionRatio &&
@@ -610,10 +619,7 @@ export function ModelMutateDrawer({
               if (!result.success) break
             }
 
-            if (
-              results.length > 0 &&
-              !didAllOptionUpdatesSucceed(results)
-            ) {
+            if (results.length > 0 && !didAllOptionUpdatesSucceed(results)) {
               queryClient.invalidateQueries({
                 queryKey: modelsQueryKeys.lists(),
               })
@@ -755,9 +761,9 @@ export function ModelMutateDrawer({
                     <FormLabel>{t('Vendor')}</FormLabel>
                     <Select
                       items={vendors.map((vendor) => ({
-                          value: String(vendor.id),
-                          label: vendor.name,
-                        }))}
+                        value: String(vendor.id),
+                        label: vendor.name,
+                      }))}
                       onValueChange={(value) =>
                         field.onChange(
                           value ? Number.parseInt(value) : undefined
@@ -862,9 +868,9 @@ export function ModelMutateDrawer({
                 <h3 className='text-sm font-semibold'>{t('Endpoints')}</h3>
                 <Select<string>
                   items={Object.keys(ENDPOINT_TEMPLATES).map((key) => ({
-                      value: key,
-                      label: key,
-                    }))}
+                    value: key,
+                    label: key,
+                  }))}
                   onValueChange={(v) =>
                     v !== null && handleFillEndpointTemplate(v)
                   }
@@ -1015,7 +1021,9 @@ export function ModelMutateDrawer({
                                     field.onChange(value)
                                     if (value) {
                                       setPromptPrice(
-                                        (Number.parseFloat(value) * 2).toString()
+                                        (
+                                          Number.parseFloat(value) * 2
+                                        ).toString()
                                       )
                                     } else {
                                       setPromptPrice('')
@@ -1025,7 +1033,8 @@ export function ModelMutateDrawer({
                               />
                             </FormControl>
                             <FormDescription>
-                              {field.value && !Number.isNaN(Number.parseFloat(field.value))
+                              {field.value &&
+                              !Number.isNaN(Number.parseFloat(field.value))
                                 ? `Calculated price: $${(Number.parseFloat(field.value) * 2).toFixed(4)} per 1M tokens`
                                 : t('Multiplier for prompt tokens.')}
                             </FormDescription>
@@ -1078,43 +1087,44 @@ export function ModelMutateDrawer({
                     </>
                   ) : (
                     <div className='space-y-4'>
-                        <div className='space-y-2'>
-                          <Label>{t('Prompt price ($/1M tokens)')}</Label>
-                          <Input
-                            type='text'
-                            placeholder='2.0'
-                            value={promptPrice}
-                            onChange={(e) =>
-                              handlePromptPriceChange(e.target.value)
-                            }
-                          />
-                          <p className='text-muted-foreground text-sm'>
-                            {promptPrice && !Number.isNaN(Number.parseFloat(promptPrice))
-                              ? `Calculated ratio: ${(Number.parseFloat(promptPrice) / 2).toFixed(4)}`
-                              : t('Enter Input price to calculate ratio')}
-                          </p>
-                        </div>
+                      <div className='space-y-2'>
+                        <Label>{t('Prompt price ($/1M tokens)')}</Label>
+                        <Input
+                          type='text'
+                          placeholder='2.0'
+                          value={promptPrice}
+                          onChange={(e) =>
+                            handlePromptPriceChange(e.target.value)
+                          }
+                        />
+                        <p className='text-muted-foreground text-sm'>
+                          {promptPrice &&
+                          !Number.isNaN(Number.parseFloat(promptPrice))
+                            ? `Calculated ratio: ${(Number.parseFloat(promptPrice) / 2).toFixed(4)}`
+                            : t('Enter Input price to calculate ratio')}
+                        </p>
+                      </div>
 
-                        <div className='space-y-2'>
-                          <Label>{t('Completion price ($/1M tokens)')}</Label>
-                          <Input
-                            type='text'
-                            placeholder='4.0'
-                            value={completionPrice}
-                            onChange={(e) =>
-                              handleCompletionPriceChange(e.target.value)
-                            }
-                          />
-                          <p className='text-muted-foreground text-sm'>
-                            {completionPrice &&
-                            !Number.isNaN(Number.parseFloat(completionPrice)) &&
-                            promptPrice &&
-                            !Number.isNaN(Number.parseFloat(promptPrice)) &&
-                            Number.parseFloat(promptPrice) > 0
-                              ? `Calculated ratio: ${(Number.parseFloat(completionPrice) / Number.parseFloat(promptPrice)).toFixed(4)}`
-                              : t('Enter Completion price to calculate ratio')}
-                          </p>
-                        </div>
+                      <div className='space-y-2'>
+                        <Label>{t('Completion price ($/1M tokens)')}</Label>
+                        <Input
+                          type='text'
+                          placeholder='4.0'
+                          value={completionPrice}
+                          onChange={(e) =>
+                            handleCompletionPriceChange(e.target.value)
+                          }
+                        />
+                        <p className='text-muted-foreground text-sm'>
+                          {completionPrice &&
+                          !Number.isNaN(Number.parseFloat(completionPrice)) &&
+                          promptPrice &&
+                          !Number.isNaN(Number.parseFloat(promptPrice)) &&
+                          Number.parseFloat(promptPrice) > 0
+                            ? `Calculated ratio: ${(Number.parseFloat(completionPrice) / Number.parseFloat(promptPrice)).toFixed(4)}`
+                            : t('Enter Completion price to calculate ratio')}
+                        </p>
+                      </div>
                     </div>
                   )}
 

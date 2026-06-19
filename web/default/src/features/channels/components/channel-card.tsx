@@ -18,8 +18,10 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { flexRender, type Row } from '@tanstack/react-table'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
+
 import { GroupBadge } from '@/components/group-badge'
+import { cn } from '@/lib/utils'
+
 import { CHANNEL_STATUS } from '../constants'
 import { isTagAggregateRow, parseGroupsList } from '../lib'
 import type { Channel } from '../types'
@@ -130,7 +132,9 @@ export function ChannelCard({ row }: { row: Row<Channel> }) {
             <div className={cn('mb-1', labelClass)}>
               {fieldLabels.response_time}
             </div>
-            <div className={cn('mb-1', labelClass)}>{fieldLabels.test_time}</div>
+            <div className={cn('mb-1', labelClass)}>
+              {fieldLabels.test_time}
+            </div>
             <div className='overflow-hidden text-sm'>
               {responseCell ?? <span className='text-muted-foreground'>-</span>}
             </div>

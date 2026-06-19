@@ -384,9 +384,7 @@ function BalanceCell({ channel }: { channel: Channel }) {
     await handleUpdateChannelBalance(channel.id, queryClient)
     setIsUpdating(false)
   }
-  let remainingBadgeLabel = sensitiveVisible
-    ? remainingDisplay
-    : SENSITIVE_MASK
+  let remainingBadgeLabel = sensitiveVisible ? remainingDisplay : SENSITIVE_MASK
   if (sensitiveVisible && isUpdating) {
     remainingBadgeLabel = t('Updating...')
   } else if (sensitiveVisible && channel.type === 57) {
