@@ -39,3 +39,4 @@ token_estimator_test.go
 skills-lock.json
 .playwright-mcp
 .codegraph/
+.zcode/
