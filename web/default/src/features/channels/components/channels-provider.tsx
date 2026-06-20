@@ -18,7 +18,13 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useQueryClient } from '@tanstack/react-query'
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react'
 
 import { useChannelUpstreamUpdates } from '../hooks/use-channel-upstream-updates'
 import { channelsQueryKeys } from '../lib'
@@ -89,24 +95,38 @@ export function ChannelsProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient])
   const upstream = useChannelUpstreamUpdates(refreshChannels)
 
+  // useState setters are stable, so the context value only needs to change when
+  // an actual state value changes. Memoizing avoids handing every consumer
+  // (including all channel cards/cells) a brand-new object on each render.
+  const value = useMemo<ChannelsContextType>(
+    () => ({
+      open,
+      setOpen,
+      currentRow,
+      setCurrentRow,
+      currentTag,
+      setCurrentTag,
+      enableTagMode,
+      setEnableTagMode,
+      idSort,
+      setIdSort,
+      sensitiveVisible,
+      setSensitiveVisible,
+      upstream,
+    }),
+    [
+      open,
+      currentRow,
+      currentTag,
+      enableTagMode,
+      idSort,
+      sensitiveVisible,
+      upstream,
+    ]
+  )
+
   return (
-    <ChannelsContext.Provider
-      value={{
-        open,
-        setOpen,
-        currentRow,
-        setCurrentRow,
-        currentTag,
-        setCurrentTag,
-        enableTagMode,
-        setEnableTagMode,
-        idSort,
-        setIdSort,
-        sensitiveVisible,
-        setSensitiveVisible,
-        upstream,
-      }}
-    >
+    <ChannelsContext.Provider value={value}>
       {children}
     </ChannelsContext.Provider>
   )

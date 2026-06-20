@@ -16,18 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type ChangeEvent, useRef, type SetStateAction, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { type ChangeEvent, useRef, type SetStateAction, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+
+import { StaticDataTable } from '@/components/data-table'
+import { Dialog } from '@/components/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
-import { StaticDataTable } from '@/components/data-table'
-import { Dialog } from '@/components/dialog'
+
 import { SettingsSwitchField } from '../components/settings-form-layout'
 
 export interface WaffoSettingsValues {
@@ -97,8 +99,9 @@ export function WaffoSettingsSection({
   }
 
   const saveMethod = () => {
-    if (!methodForm.name.trim())
+    if (!methodForm.name.trim()) {
       return toast.error(t('Payment method name is required'))
+    }
     if (editingIdx === -1) {
       onPayMethodsChange((prev) => [...prev, methodForm])
     } else {
@@ -125,15 +128,12 @@ export function WaffoSettingsSection({
     }
 
     const reader = new FileReader()
-    reader.onload = (loadEvent) => {
+    reader.addEventListener('load', () => {
       setMethodForm((previous) => ({
         ...previous,
-        icon:
-          typeof loadEvent.target?.result === 'string'
-            ? loadEvent.target.result
-            : '',
+        icon: typeof reader.result === 'string' ? reader.result : '',
       }))
-    }
+    })
     reader.readAsDataURL(file)
     event.target.value = ''
   }
@@ -164,13 +164,13 @@ export function WaffoSettingsSection({
             checked={values.WaffoEnabled}
             onCheckedChange={(v) => onValueChange('WaffoEnabled', v)}
             label={t('Enable Waffo')}
-            className='border-b-0 py-0'
+            className='py-0'
           />
           <SettingsSwitchField
             checked={values.WaffoSandbox}
             onCheckedChange={(v) => onValueChange('WaffoSandbox', v)}
             label={t('Sandbox mode')}
-            className='border-b-0 py-0'
+            className='py-0'
           />
         </div>
 

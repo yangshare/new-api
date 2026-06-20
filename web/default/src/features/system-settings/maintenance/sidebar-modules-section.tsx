@@ -53,7 +53,9 @@ type SidebarModulesSectionProps = {
 type SidebarFormValues = SidebarModulesAdminConfig
 
 const toTitleCase = (value: string) =>
-  value.replace(/[_-]+/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+  value
+    .replaceAll(/[_-]+/g, ' ')
+    .replaceAll(/\b\w/g, (char) => char.toUpperCase())
 
 export function SidebarModulesSection({
   config,
@@ -239,7 +241,7 @@ export function SidebarModulesSection({
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         name={`${sectionKey}.${moduleKey}` as any}
                         render={({ field }) => (
-                          <SettingsSwitchItem className='border-b-0 py-2'>
+                          <SettingsSwitchItem className='py-2'>
                             <SettingsSwitchContent>
                               <FormLabel>{moduleInfo.title}</FormLabel>
                               <FormDescription>
