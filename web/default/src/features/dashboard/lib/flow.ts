@@ -716,6 +716,25 @@ function maskFlowGraphLabels(
   }
 }
 
+function maskFlowFilterOptions(
+  filterOptions: FlowFilterOptions
+): FlowFilterOptions {
+  return {
+    users: filterOptions.users.map((user) => ({
+      ...user,
+      label: maskFlowLabel(user.label),
+    })),
+    nodes: filterOptions.nodes.map((node) => ({
+      ...node,
+      label:
+        SENSITIVE_FLOW_KINDS.has(node.kind) &&
+        !OTHER_FLOW_NODE_ID_SET.has(node.value)
+          ? maskFlowLabel(node.label)
+          : node.label,
+    })),
+  }
+}
+
 function applyFlowHighlights(
   nodes: Iterable<DashboardFlowNode>,
   links: Iterable<DashboardFlowLink>,
@@ -987,6 +1006,18 @@ export function buildDashboardFlowData(
     stages,
     ctx
   )
+  const filterOptions: FlowFilterOptions = {
+    users: buildUserFilterOptions(rows, metric, palette),
+    nodes: buildNodeFilterOptions(
+      userFilteredRows,
+      metric,
+      role,
+      options.visibleStages,
+      palette,
+      ctx,
+      options.selectedNodes
+    ),
+  }
 
   return {
     summary: buildSummary(filteredRows),
@@ -1006,18 +1037,9 @@ export function buildDashboardFlowData(
         maskSensitive: options.maskSensitive,
       }
     ),
-    filterOptions: {
-      users: buildUserFilterOptions(rows, metric, palette),
-      nodes: buildNodeFilterOptions(
-        userFilteredRows,
-        metric,
-        role,
-        options.visibleStages,
-        palette,
-        ctx,
-        options.selectedNodes
-      ),
-    },
+    filterOptions: options.maskSensitive
+      ? maskFlowFilterOptions(filterOptions)
+      : filterOptions,
   }
 }
 

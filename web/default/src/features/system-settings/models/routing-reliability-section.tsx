@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -205,6 +205,9 @@ export function RoutingReliabilitySection({
   const baselineRef = useRef<NormalizedRoutingReliabilityValues>(
     normalizeDefaults(defaultValues)
   )
+  const baselineSerializedRef = useRef<string>(
+    JSON.stringify(normalizeDefaults(defaultValues))
+  )
 
   const formDefaults = useMemo(
     () => buildFormDefaults(defaultValues),
@@ -221,6 +224,14 @@ export function RoutingReliabilitySection({
   })
 
   useResetForm(form, formDefaults)
+
+  useEffect(() => {
+    const normalized = normalizeDefaults(defaultValues)
+    const serialized = JSON.stringify(normalized)
+    if (serialized === baselineSerializedRef.current) return
+    baselineRef.current = normalized
+    baselineSerializedRef.current = serialized
+  }, [defaultValues])
 
   const autoDisableStatusCodes = form.watch('AutomaticDisableStatusCodes')
   const autoRetryStatusCodes = form.watch('AutomaticRetryStatusCodes')
@@ -253,6 +264,7 @@ export function RoutingReliabilitySection({
     }
 
     baselineRef.current = normalized
+    baselineSerializedRef.current = JSON.stringify(normalized)
   }
 
   return (
