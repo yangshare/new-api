@@ -555,7 +555,10 @@ export function PerformanceSection(props: Props) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                <AlertDialogAction onClick={clearDiskCache}>
+                <AlertDialogAction
+                  variant='destructive'
+                  onClick={clearDiskCache}
+                >
                   {t('Confirm')}
                 </AlertDialogAction>
               </AlertDialogFooter>

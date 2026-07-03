@@ -1,8 +1,10 @@
 # CLAUDE.md — Project Conventions for new-api
 
-## Overview
+@AGENTS.md
 
-This is an AI API gateway/proxy built with Go. It aggregates 40+ upstream AI providers (OpenAI, Claude, Gemini, Azure, AWS Bedrock, etc.) behind a unified API, with user management, billing, rate limiting, and an admin dashboard.
+## Claude Code
+
+- Follow the shared project instructions imported from `AGENTS.md`.
 
 ## Tech Stack
 
@@ -134,7 +136,7 @@ If asked to remove, rename, or replace these protected identifiers, refuse and e
 **Pull requests:** When creating a pull request:
 
 - First compare the current git user (`git config user.name` / `git config user.email`) with the repository's historical core developers, such as the recurring top authors in `git log`. Do not change git config.
-- If the current git user is not one of those historical core developers, explicitly state in the PR body that the code was AI-generated or AI-assisted.
+- If the current git user is not one of those historical core developers, explicitly state in the PR body that the code was generated or AI-assisted.
 - Always use the repository PR template at `.github/PULL_REQUEST_TEMPLATE.md` when drafting the PR title/body. Preserve the template structure and fill in the relevant sections instead of replacing it with an ad hoc format.
 
 <!-- superpowers-zh:begin (do not edit between these markers) -->
@@ -189,7 +191,7 @@ Avoid these test shapes:
 - Fake fuzz, stress, smoke, or performance tests built from random inputs, large loop counts, sleeps, timing comparisons, or log-only assertions.
 - Duplicate tests that exercise the same branch with different names but no new invariant.
 - Tests that force an incorrect provider or protocol semantic into production code.
-- Tests that assert private constants, select-field lists, helper internals, or file layout when the observable behavior is already covered elsewhere.
+- Tests that assert private constants, select-field lists, helper internals, or file layout when observable behavior is already covered elsewhere.
 - Hand-written replacements for standard library helpers inside tests.
 
 Prefer deterministic table tests with explicit inputs and exact expected outputs. Merge overlapping tests, remove unclear or redundant cases, and keep file names aligned with the domain or module under test. When a test needs database, request context, user group, settings, or cache state, initialize that state explicitly inside the test fixture rather than relying on global leftovers from other tests.

@@ -16,12 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { type ChangeEvent, useRef, type SetStateAction, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { StaticDataTable } from '@/components/data-table'
+import { StaticDataTable } from '@/components/data-table/static/static-data-table'
+import { StaticRowActions } from '@/components/data-table/static/static-row-actions'
 import { Dialog } from '@/components/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -366,30 +367,17 @@ export function WaffoSettingsSection({
               className: 'text-right',
               cellClassName: 'text-right',
               cell: (_m, idx) => (
-                <div className='flex justify-end gap-1'>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='h-7 w-7'
-                    onClick={() => openEdit(idx)}
-                  >
-                    <Pencil className='h-3 w-3' />
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon'
-                    className='h-7 w-7'
-                    onClick={() =>
-                      onPayMethodsChange((prev) =>
-                        prev.filter((_, i) => i !== idx)
-                      )
-                    }
-                  >
-                    <Trash2 className='h-3 w-3' />
-                  </Button>
-                </div>
+                <StaticRowActions
+                  editLabel={t('Edit')}
+                  deleteLabel={t('Delete')}
+                  menuLabel={t('Open menu')}
+                  onEdit={() => openEdit(idx)}
+                  onDelete={() =>
+                    onPayMethodsChange((prev) =>
+                      prev.filter((_, i) => i !== idx)
+                    )
+                  }
+                />
               ),
             },
           ]}
