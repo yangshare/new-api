@@ -59,18 +59,24 @@ function formatJsonValidationError(
     )
   }
 
-  const parts = [
-    error.line && error.column
-      ? t('JSON is invalid at line {{line}}, column {{column}}.', {
-          line: error.line,
-          column: error.column,
-        })
-      : error.position !== undefined
-        ? t('JSON is invalid at position {{position}}.', {
-            position: error.position,
-          })
-        : t('JSON is invalid. Please check the syntax.'),
-  ]
+  let locationMessage: string
+  if (error.line && error.column) {
+    locationMessage = t(
+      'JSON is invalid at line {{line}}, column {{column}}.',
+      {
+        line: error.line,
+        column: error.column,
+      }
+    )
+  } else if (error.position !== undefined) {
+    locationMessage = t('JSON is invalid at position {{position}}.', {
+      position: error.position,
+    })
+  } else {
+    locationMessage = t('JSON is invalid. Please check the syntax.')
+  }
+
+  const parts = [locationMessage]
 
   if (error.missingCommaLine) {
     parts.push(
@@ -417,6 +423,7 @@ export function RatioSettingsCard({
       2: 'grid-cols-2',
       3: 'grid-cols-3',
       4: 'grid-cols-4',
+      5: 'grid-cols-5',
     }[visibleTabs.length] ?? 'grid-cols-4'
   const defaultTab = visibleTabs[0] ?? 'models'
 
@@ -480,14 +487,14 @@ export function RatioSettingsCard({
           {renderTabContent(defaultTab)}
         </SettingsSection>
       ) : (
-        <Tabs defaultValue={defaultTab} className='space-y-6'>
+        <Tabs defaultValue={defaultTab} className='h-full min-h-0 gap-6'>
           <SettingsPageTitleStatusPortal>
             {renderTabSwitcher()}
           </SettingsPageTitleStatusPortal>
 
-          <SettingsSection title={t(titleKey)}>
+          <SettingsSection title={t(titleKey)} className='min-h-0 flex-1'>
             {visibleTabs.map((tab) => (
-              <TabsContent key={tab} value={tab}>
+              <TabsContent key={tab} value={tab} className='min-h-0'>
                 {renderTabContent(tab)}
               </TabsContent>
             ))}
