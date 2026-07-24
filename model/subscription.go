@@ -1066,12 +1066,12 @@ func adminResetPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int6
 // SubscriptionPlanSyncResult reports the outcome of syncing plan changes to
 // existing active subscriptions. Mirrors SubscriptionResetResult shape for UI.
 type SubscriptionPlanSyncResult struct {
-	PlanId           int   `json:"plan_id"`
-	MatchedCount     int   `json:"matched_count"`
-	SyncedCount       int   `json:"synced_count"`
-	UserCount         int   `json:"user_count"`
-	PlanTitle         string `json:"-"`
-	AffectedUserIds  []int `json:"-"`
+	PlanId          int    `json:"plan_id"`
+	MatchedCount    int    `json:"matched_count"`
+	SyncedCount     int    `json:"synced_count"`
+	UserCount       int    `json:"user_count"`
+	PlanTitle       string `json:"-"`
+	AffectedUserIds []int  `json:"-"`
 }
 
 // syncPlanSubscriptionsTx applies plan-level changes (total amount + reset
@@ -1079,8 +1079,9 @@ type SubscriptionPlanSyncResult struct {
 // transaction. Used when an admin edits a plan and opts to sync existing
 // subscribers. amount_used is preserved; it is only clamped down to the new
 // total when the new total is smaller than what was already consumed, so a
-// sync never produces a credit or overflow. next_reset_time is recomputed
-// from the plan's reset period.
+// sync never produces a credit or overflow. The reset schedule begins at the
+// synchronization time, preventing a new, shorter period from immediately
+// resetting an existing subscriber's used quota.
 func SyncPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int64) (*SubscriptionPlanSyncResult, error) {
 	if tx == nil || plan == nil {
 		return nil, errors.New("invalid sync args")
@@ -1100,13 +1101,16 @@ func SyncPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int64) (*S
 		if sub.AmountTotal > 0 && sub.AmountUsed > sub.AmountTotal {
 			sub.AmountUsed = sub.AmountTotal
 		}
-		// Recompute next reset time from the plan's reset period, anchored at
-		// the last reset (or start time if never reset).
-		baseUnix := sub.LastResetTime
-		if baseUnix <= 0 {
-			baseUnix = sub.StartTime
+		// Start the new reset schedule at sync time. Using an older reset time
+		// could leave the computed deadline in the past and immediately clear
+		// amount_used in the reset task.
+		nextReset := calcNextResetTime(time.Unix(now, 0), plan, sub.EndTime)
+		sub.NextResetTime = nextReset
+		if nextReset > 0 {
+			sub.LastResetTime = now
+		} else {
+			sub.LastResetTime = 0
 		}
-		sub.NextResetTime = calcNextResetTime(time.Unix(baseUnix, 0), plan, sub.EndTime)
 		if err := tx.Save(sub).Error; err != nil {
 			return nil, err
 		}
@@ -1122,12 +1126,12 @@ func SyncPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int64) (*S
 		userIds = append(userIds, sub.UserId)
 	}
 	return &SubscriptionPlanSyncResult{
-		PlanId:           plan.Id,
-		MatchedCount:     len(subs),
-		SyncedCount:       len(subs),
-		UserCount:         len(userIds),
-		PlanTitle:         plan.Title,
-		AffectedUserIds:   userIds,
+		PlanId:          plan.Id,
+		MatchedCount:    len(subs),
+		SyncedCount:     len(subs),
+		UserCount:       len(userIds),
+		PlanTitle:       plan.Title,
+		AffectedUserIds: userIds,
 	}, nil
 }
 

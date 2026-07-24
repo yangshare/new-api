@@ -119,9 +119,54 @@ func TestSyncPlanSubscriptionsTxUnlimitedPlan(t *testing.T) {
 	assert.Equal(t, 1, res.SyncedCount)
 
 	s := getSubscriptionResetSub(t, 9811)
-	assert.Zero(t, s.AmountTotal)              // unlimited preserved
+	assert.Zero(t, s.AmountTotal)               // unlimited preserved
 	assert.EqualValues(t, 999999, s.AmountUsed) // never clamped when total is 0
-	assert.Zero(t, s.NextResetTime)            // "never" period -> no reset
+	assert.Zero(t, s.NextResetTime)             // "never" period -> no reset
+}
+
+func TestSyncPlanSubscriptionsTxStartsNewResetScheduleAtSyncTime(t *testing.T) {
+	truncateTables(t)
+
+	now := GetDBTimestamp()
+	plan := &SubscriptionPlan{
+		Id:               9712,
+		Title:            "Existing quota",
+		PriceAmount:      10,
+		DurationUnit:     SubscriptionDurationMonth,
+		DurationValue:    1,
+		TotalAmount:      1000,
+		QuotaResetPeriod: SubscriptionResetNever,
+	}
+	seedSubscriptionResetPlan(t, plan)
+	seedSubscriptionResetSub(t, &UserSubscription{
+		Id:            9812,
+		UserId:        512,
+		PlanId:        plan.Id,
+		AmountTotal:   1000,
+		AmountUsed:    400,
+		StartTime:     now - 30*24*3600,
+		EndTime:       now + 30*24*3600,
+		Status:        "active",
+		LastResetTime: now - 30*24*3600,
+	})
+
+	updated := &SubscriptionPlan{
+		Id:               plan.Id,
+		Title:            plan.Title,
+		DurationUnit:     SubscriptionDurationMonth,
+		DurationValue:    1,
+		TotalAmount:      1000,
+		QuotaResetPeriod: SubscriptionResetDaily,
+	}
+
+	_, err := SyncPlanSubscriptionsTx(DB, updated, now)
+	require.NoError(t, err)
+
+	sub := getSubscriptionResetSub(t, 9812)
+	assert.EqualValues(t, 400, sub.AmountUsed)
+	assert.Equal(t, now, sub.LastResetTime)
+	assert.Equal(t, calcNextResetTime(time.Unix(now, 0), updated, sub.EndTime), sub.NextResetTime)
+	assert.Greater(t, sub.NextResetTime, now)
 }
 
 // TestSyncPlanSubscriptionsTxNoMatch verifies an empty plan is a no-op success.
