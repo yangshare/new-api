@@ -593,21 +593,26 @@ export function SubscriptionsMutateDrawer({
                 />
 
                 {isEdit && (
-                  <div className={sideDrawerSwitchItemClassName()}>
-                    <div className='flex items-center justify-between'>
-                      <FormLabel className='!mt-0'>
-                        {t('Apply changes to existing subscriptions')}
-                      </FormLabel>
-                      <Switch
-                        checked={applyToExisting}
-                        onCheckedChange={(checked) => setApplyToExisting(!!checked)}
-                      />
-                    </div>
-                    <p className='text-muted-foreground text-xs'>
+                  <div
+                    className={sideDrawerSwitchItemClassName(
+                      'grid min-h-0 grid-cols-[minmax(0,1fr)_auto] justify-normal gap-x-3 gap-y-1 sm:grid-cols-[minmax(10rem,1fr)_minmax(0,1.5fr)_auto] sm:gap-x-4'
+                    )}
+                  >
+                    <FormLabel className='!mt-0'>
+                      {t('Apply changes to existing subscriptions')}
+                    </FormLabel>
+                    <p className='text-muted-foreground col-span-2 text-xs sm:col-span-1 sm:col-start-2 sm:row-start-1'>
                       {t(
                         'Sync the new quota and reset period to active subscribers. Used quota is kept.'
                       )}
                     </p>
+                    <Switch
+                      checked={applyToExisting}
+                      className='col-start-2 row-start-1 justify-self-end sm:col-start-3'
+                      onCheckedChange={(checked) =>
+                        setApplyToExisting(!!checked)
+                      }
+                    />
                   </div>
                 )}
               </div>
