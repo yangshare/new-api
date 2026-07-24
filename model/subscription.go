@@ -1063,6 +1063,74 @@ func adminResetPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int6
 	return buildSubscriptionResetResult(plan, subs, advanceResetTime), nil
 }
 
+// SubscriptionPlanSyncResult reports the outcome of syncing plan changes to
+// existing active subscriptions. Mirrors SubscriptionResetResult shape for UI.
+type SubscriptionPlanSyncResult struct {
+	PlanId           int   `json:"plan_id"`
+	MatchedCount     int   `json:"matched_count"`
+	SyncedCount       int   `json:"synced_count"`
+	UserCount         int   `json:"user_count"`
+	PlanTitle         string `json:"-"`
+	AffectedUserIds  []int `json:"-"`
+}
+
+// syncPlanSubscriptionsTx applies plan-level changes (total amount + reset
+// period) to every active subscription under the plan within the caller's
+// transaction. Used when an admin edits a plan and opts to sync existing
+// subscribers. amount_used is preserved; it is only clamped down to the new
+// total when the new total is smaller than what was already consumed, so a
+// sync never produces a credit or overflow. next_reset_time is recomputed
+// from the plan's reset period.
+func SyncPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int64) (*SubscriptionPlanSyncResult, error) {
+	if tx == nil || plan == nil {
+		return nil, errors.New("invalid sync args")
+	}
+	var subs []UserSubscription
+	if err := lockForUpdate(tx).
+		Where("plan_id = ? AND status = ? AND end_time > ?", plan.Id, "active", now).
+		Order("user_id asc, end_time asc, id asc").
+		Find(&subs).Error; err != nil {
+		return nil, err
+	}
+	for i := range subs {
+		sub := &subs[i]
+		sub.AmountTotal = plan.TotalAmount
+		// Clamp used to the new total when it shrank below consumed amount.
+		// A zero total means unlimited and never clamps.
+		if sub.AmountTotal > 0 && sub.AmountUsed > sub.AmountTotal {
+			sub.AmountUsed = sub.AmountTotal
+		}
+		// Recompute next reset time from the plan's reset period, anchored at
+		// the last reset (or start time if never reset).
+		baseUnix := sub.LastResetTime
+		if baseUnix <= 0 {
+			baseUnix = sub.StartTime
+		}
+		sub.NextResetTime = calcNextResetTime(time.Unix(baseUnix, 0), plan, sub.EndTime)
+		if err := tx.Save(sub).Error; err != nil {
+			return nil, err
+		}
+	}
+	// Deduplicate affected user ids for downstream audit/cache invalidation.
+	userIds := make([]int, 0, len(subs))
+	seenUsers := make(map[int]struct{}, len(subs))
+	for _, sub := range subs {
+		if _, ok := seenUsers[sub.UserId]; ok {
+			continue
+		}
+		seenUsers[sub.UserId] = struct{}{}
+		userIds = append(userIds, sub.UserId)
+	}
+	return &SubscriptionPlanSyncResult{
+		PlanId:           plan.Id,
+		MatchedCount:     len(subs),
+		SyncedCount:       len(subs),
+		UserCount:         len(userIds),
+		PlanTitle:         plan.Title,
+		AffectedUserIds:   userIds,
+	}, nil
+}
+
 func AdminResetUserSubscriptionsByPlan(userId int, planId int, advanceResetTime bool) (*SubscriptionResetResult, error) {
 	if userId <= 0 || planId <= 0 {
 		return nil, errors.New("invalid userId or planId")

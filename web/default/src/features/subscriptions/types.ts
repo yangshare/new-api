@@ -87,6 +87,19 @@ export interface ApiResponse<T = unknown> {
 
 export interface PlanPayload {
   plan: Partial<SubscriptionPlan>
+  // Edit-only: when true, total amount / reset period changes are also applied
+  // to the plan's existing active subscriptions (amount_used is preserved and
+  // only clamped down if the new total is smaller).
+  apply_to_existing?: boolean
+}
+
+// Result returned by PUT /plans/:id when apply_to_existing is set: reports how
+// many active subscriptions were synced.
+export interface PlanSyncResult {
+  plan_id: number
+  matched_count: number
+  synced_count: number
+  user_count: number
 }
 
 export interface SubscriptionPayRequest {

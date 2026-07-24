@@ -22,6 +22,7 @@ import type {
   ApiResponse,
   PlanRecord,
   PlanPayload,
+  PlanSyncResult,
   UserSubscriptionRecord,
   CreateUserSubscriptionRequest,
   ResetUserSubscriptionsRequest,
@@ -51,7 +52,7 @@ export async function createPlan(
 export async function updatePlan(
   id: number,
   data: PlanPayload
-): Promise<ApiResponse<PlanRecord>> {
+): Promise<ApiResponse<PlanSyncResult>> {
   const res = await api.put(`/api/subscription/admin/plans/${id}`, data)
   return res.data
 }

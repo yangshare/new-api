@@ -99,6 +99,7 @@ export function SubscriptionsMutateDrawer({
   const tokensOnly = currencyMeta.kind === 'tokens'
   const currencyLabel = getCurrencyLabel()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [applyToExisting, setApplyToExisting] = useState(false)
   const [groupOptions, setGroupOptions] = useState<string[]>([])
   const [creatingPancakeProduct, setCreatingPancakeProduct] = useState(false)
   const [pancakeProducts, setPancakeProducts] = useState<
@@ -118,6 +119,7 @@ export function SubscriptionsMutateDrawer({
       } else {
         form.reset(PLAN_FORM_DEFAULTS)
       }
+      setApplyToExisting(false)
       getGroups()
         .then((res) => {
           if (res.success) setGroupOptions(res.data || [])
@@ -158,9 +160,20 @@ export function SubscriptionsMutateDrawer({
     try {
       const payload = formValuesToPlanPayload(values)
       if (isEdit && currentRow?.plan?.id) {
+        if (applyToExisting) {
+          payload.apply_to_existing = true
+        }
         const res = await updatePlan(currentRow.plan.id, payload)
         if (res.success) {
-          toast.success(t('Update succeeded'))
+          if (applyToExisting && res.data?.synced_count) {
+            toast.success(
+              t('Updated; synced {{count}} active subscriptions', {
+                count: res.data.synced_count,
+              })
+            )
+          } else {
+            toast.success(t('Update succeeded'))
+          }
           onOpenChange(false)
           triggerRefresh()
         }
@@ -578,6 +591,25 @@ export function SubscriptionsMutateDrawer({
                     </FormItem>
                   )}
                 />
+
+                {isEdit && (
+                  <div className={sideDrawerSwitchItemClassName()}>
+                    <div className='flex items-center justify-between'>
+                      <FormLabel className='!mt-0'>
+                        {t('Apply changes to existing subscriptions')}
+                      </FormLabel>
+                      <Switch
+                        checked={applyToExisting}
+                        onCheckedChange={(checked) => setApplyToExisting(!!checked)}
+                      />
+                    </div>
+                    <p className='text-muted-foreground text-xs'>
+                      {t(
+                        'Sync the new quota and reset period to active subscribers. Used quota is kept.'
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
             </SideDrawerSection>
 
