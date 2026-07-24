@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -309,8 +310,15 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		if req.Plan.AllowWalletOverflow != nil {
 			updateMap["allow_wallet_overflow"] = *req.Plan.AllowWalletOverflow
 		}
-		if err := tx.Model(&model.SubscriptionPlan{}).Where("id = ?", id).Updates(updateMap).Error; err != nil {
-			return err
+		res := tx.Model(&model.SubscriptionPlan{}).Where("id = ?", id).Updates(updateMap)
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			// Reject silent success on a non-existent plan id instead of
+			// returning a zero-count sync result that looks like nothing
+			// needed syncing.
+			return errors.New("套餐不存在")
 		}
 		// Apply plan changes to existing active subscribers when requested.
 		// amount_used is preserved (clamped down if the new total is smaller),
