@@ -81,7 +81,7 @@ single-model action only updates the draft.
 
 Primary component:
 
-- `web/default/src/features/system-settings/models/model-pricing-sheet.tsx`
+- `web/src/features/system-settings/models/model-pricing-sheet.tsx`
   - `ModelPricingEditorPanel`
 
 Related callers should not require behavior changes:

@@ -12,7 +12,7 @@
 
 ## 文件结构
 
-- **修改：** `web/default/src/features/system-settings/models/model-pricing-sheet.tsx`
+- **修改：** `web/src/features/system-settings/models/model-pricing-sheet.tsx`
   - 职责：将 `ModelPricingEditorPanel` 的 Footer 操作区上移合并到 Header，调整 JSX 层级使 Header 进入 `<form>` 内部，清理不再使用的 `SheetFooter` 和 `sideDrawerFooterClassName` 导入。
 
 ---
@@ -20,14 +20,14 @@
 ## 任务 1：修改 ModelPricingEditorPanel 布局
 
 **文件：**
-- 修改：`web/default/src/features/system-settings/models/model-pricing-sheet.tsx`
+- 修改：`web/src/features/system-settings/models/model-pricing-sheet.tsx`
 
 ### 步骤 1：运行前端类型检查建立基线
 
 - [ ] **运行基线类型检查**
 
 ```bash
-cd web/default && bun run typecheck
+cd web && bun run typecheck
 ```
 
 **预期：** 命令成功退出（exit code 0），无类型错误输出。
@@ -266,7 +266,7 @@ import { sideDrawerContentClassName } from '@/components/drawer-layout'
 - [ ] **运行类型检查**
 
 ```bash
-cd web/default && bun run typecheck
+cd web && bun run typecheck
 ```
 
 **预期：** 命令成功退出（exit code 0），无新增类型错误。如果出现与本次修改无关的既有错误，记录但不阻塞。
@@ -278,7 +278,7 @@ cd web/default && bun run typecheck
 - [ ] **运行生产构建**
 
 ```bash
-cd web/default && bun run build
+cd web && bun run build
 ```
 
 **预期：** 构建成功完成，无与 `model-pricing-sheet.tsx` 相关的编译错误。
@@ -290,7 +290,7 @@ cd web/default && bun run build
 - [ ] **提交变更**
 
 ```bash
-git add web/default/src/features/system-settings/models/model-pricing-sheet.tsx
+git add web/src/features/system-settings/models/model-pricing-sheet.tsx
 git commit -m "feat(ui): move model pricing editor actions to header
 
 Move cancel and update/add buttons from footer to header in

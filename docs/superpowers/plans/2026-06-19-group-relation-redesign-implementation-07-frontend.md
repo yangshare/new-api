@@ -1,8 +1,8 @@
-# 分组关联重设计执行分片 07：web/default 前端改造
+# 分组关联重设计执行分片 07：web 前端改造
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此分片。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 让 `web/default` 的分组管理、用户、渠道、Token、订阅和倍率编辑器全部切到 ID 化交互。
+**目标：** 让 `web` 的分组管理、用户、渠道、Token、订阅和倍率编辑器全部切到 ID 化交互。
 
 **架构：** 本分片只处理阶段 `4` 的前端工作，遵循项目现有的 React 19、Base UI、Tailwind、`react-hook-form` 模式，不引入额外 UI 框架。
 
@@ -18,7 +18,7 @@
 
 ## v2 前端约束
 
-- `web/default` 使用 `react-hook-form`
+- `web` 使用 `react-hook-form`
 - 使用 `@/components/ui/form`
 - 使用 `@/components/ui/select`
 - 多选使用 `MultiSelect`
@@ -28,17 +28,17 @@
 
 ## 文件
 
-- 创建：`web/default/src/features/system-settings/pages/group-management-page.tsx`
-- 创建：`web/default/src/features/system-settings/components/group-management-drawer.tsx`
-- 创建：`web/default/src/features/system-settings/lib/group-api.ts`
-- 创建：`web/default/src/features/system-settings/types/group.ts`
-- 修改：`web/default/src/features/users/lib/user-form.ts`
-- 修改：`web/default/src/features/channels/lib/channel-form.ts`
-- 修改：`web/default/src/features/keys/lib/api-key-form.ts`
-- 修改：`web/default/src/features/subscriptions/lib/plan-form.ts`
-- 修改：`web/default/src/features/system-settings/models/group-ratio-form.tsx`
-- 修改：`web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx`
-- 修改：`web/default/src/features/system-settings/request-limits/rate-limit-visual-editor.tsx`
+- 创建：`web/src/features/system-settings/pages/group-management-page.tsx`
+- 创建：`web/src/features/system-settings/components/group-management-drawer.tsx`
+- 创建：`web/src/features/system-settings/lib/group-api.ts`
+- 创建：`web/src/features/system-settings/types/group.ts`
+- 修改：`web/src/features/users/lib/user-form.ts`
+- 修改：`web/src/features/channels/lib/channel-form.ts`
+- 修改：`web/src/features/keys/lib/api-key-form.ts`
+- 修改：`web/src/features/subscriptions/lib/plan-form.ts`
+- 修改：`web/src/features/system-settings/models/group-ratio-form.tsx`
+- 修改：`web/src/features/system-settings/models/group-ratio-visual-editor.tsx`
+- 修改：`web/src/features/system-settings/request-limits/rate-limit-visual-editor.tsx`
 
 ## 任务
 
@@ -59,6 +59,6 @@
 
 ## 本片验收
 
-- [ ] `cd web/default && bun run typecheck`
-- [ ] `cd web/default && bun run build:check`
+- [ ] `cd web && bun run typecheck`
+- [ ] `cd web && bun run build:check`
 - [ ] 分组管理、用户、渠道、Token、订阅表单都能以 ID 正常提交

@@ -53,7 +53,7 @@ If either condition is not met, render nothing extra. Old logs and non-multi-key
 
 File:
 
-- `web/default/src/features/usage-logs/components/columns/common-logs-columns.tsx`
+- `web/src/features/usage-logs/components/columns/common-logs-columns.tsx`
 
 Within `ChannelCell`:
 
@@ -70,7 +70,7 @@ The index badge should be visible when the channel ID is visible. The key index 
 
 File:
 
-- `web/default/src/features/usage-logs/components/dialogs/details-dialog.tsx`
+- `web/src/features/usage-logs/components/dialogs/details-dialog.tsx`
 
 Within the admin-only Channel detail row:
 
@@ -82,7 +82,7 @@ Within the admin-only Channel detail row:
 
 File:
 
-- `web/default/src/features/usage-logs/components/usage-logs-mobile-card.tsx`
+- `web/src/features/usage-logs/components/usage-logs-mobile-card.tsx`
 
 No direct mobile-specific change is planned. The common mobile card uses the existing channel cell, so the channel column change should flow into mobile automatically.
 
@@ -97,7 +97,7 @@ No direct mobile-specific change is planned. The common mobile card uses the exi
 
 Automated verification:
 
-- Run frontend lint from `web/default`.
+- Run frontend lint from `web`.
 - Run TypeScript/build verification if available in the project scripts.
 
 Manual verification:

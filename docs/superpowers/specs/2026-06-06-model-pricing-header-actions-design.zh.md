@@ -72,7 +72,7 @@ sticky 编辑面板；移动端中，同一个编辑器显示在 Sheet 抽屉里
 
 主要组件：
 
-- `web/default/src/features/system-settings/models/model-pricing-sheet.tsx`
+- `web/src/features/system-settings/models/model-pricing-sheet.tsx`
   - `ModelPricingEditorPanel`
 
 相关调用方不应需要行为变更：

@@ -49,9 +49,9 @@
 ## 任务 5-3：最终验证
 
 - [ ] `go test ./... -v`
-- [ ] `cd web/default && bun test`
-- [ ] `cd web/default && bun run typecheck`
-- [ ] `cd web/default && bun run build:check`
+- [ ] `cd web && bun test`
+- [ ] `cd web && bun run typecheck`
+- [ ] `cd web && bun run build:check`
 - [ ] `go build -o new-api ./cmd/server`
 - [ ] 后端启动自检
 - [ ] 人工检查：

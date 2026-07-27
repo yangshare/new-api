@@ -10,7 +10,7 @@ License, or (at your option) any later version.
 # 颜色预设默认值改为 Anthropic — 设计规格
 
 - 日期：2026-06-18
-- 范围：`web/default/` 前端主题系统
+- 范围：`web/` 前端主题系统
 - 目标前端：default 主题（React 19）
 
 ## 1. 背景与目标
@@ -50,7 +50,7 @@ License, or (at your option) any later version.
 
 ## 4. 详细改动
 
-### 4.1 `web/default/src/lib/theme-customization.ts`
+### 4.1 `web/src/lib/theme-customization.ts`
 
 `DEFAULT_THEME_CUSTOMIZATION.preset` 由 `'default'` 改为 `'anthropic'`：
 
@@ -66,7 +66,7 @@ export const DEFAULT_THEME_CUSTOMIZATION: ThemeCustomization = {
 
 `PRESET_DEFAULT_FONT`（`default → 'sans'`、`anthropic → 'serif'`）与 `resolveThemeFont` 不变。
 
-### 4.2 `web/default/src/context/theme-customization-provider.tsx`
+### 4.2 `web/src/context/theme-customization-provider.tsx`
 
 preset 的 `useEffect`（当前 137–142 行）改为始终写入属性，删除"等于默认值→移除属性"的三元：
 
@@ -78,7 +78,7 @@ useEffect(() => {
 
 `setPreset`（172–179）的 cookie 逻辑保持不变（等于默认值仍 `removeCookie`，节省 cookie）。font / radius / scale 的 effect 与 cookie 逻辑均不变。
 
-### 4.3 `web/default/src/styles/theme.css`
+### 4.3 `web/src/styles/theme.css`
 
 让 `default` 预设有显式块（复用现有变量定义，不搬值）：
 
@@ -87,7 +87,7 @@ useEffect(() => {
 
 `:root` 中的非颜色 token（`--radius`、`--app-header-height`、`--app-rev`、`--font-body`）随之在显式 default 块上重复声明，值相同，无副作用。
 
-### 4.4 `web/default/index.html`
+### 4.4 `web/index.html`
 
 在 `<body>` 内、`<div id="root">` 之前插入内联脚本，首屏预设属性（此脚本执行时 `document.body` 已可用）：
 

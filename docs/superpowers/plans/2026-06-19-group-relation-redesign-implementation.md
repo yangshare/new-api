@@ -27,7 +27,7 @@
 | 4 | [04-runtime-selection](./2026-06-19-group-relation-redesign-implementation-04-runtime-selection.md) | 阶段 `1` | 运行时按 `group_id` 选渠道闭环完成 |
 | 5 | [05-ratio-settings](./2026-06-19-group-relation-redesign-implementation-05-ratio-settings.md) | 阶段 `2` | 倍率、可用组、限流全部按 ID 读取 |
 | 6 | [06-api-contracts](./2026-06-19-group-relation-redesign-implementation-06-api-contracts.md) | 阶段 `3` | 管理 API 和业务入参切到 ID 合同 |
-| 7 | [07-frontend](./2026-06-19-group-relation-redesign-implementation-07-frontend.md) | 阶段 `4` | `web/default` 完成表单和页面改造 |
+| 7 | [07-frontend](./2026-06-19-group-relation-redesign-implementation-07-frontend.md) | 阶段 `4` | `web` 完成表单和页面改造 |
 | 8 | [08-cleanup-verification](./2026-06-19-group-relation-redesign-implementation-08-cleanup-verification.md) | 阶段 `5` | 清理旧列并完成最终验证 |
 
 ## 执行规则
@@ -50,7 +50,7 @@
 - **group_usable_groups 语义：** 引入 `is_global`，分别承载全局白名单和按用户组的特殊可用关系。
 - **auto 分组迁移：** 旧 `autoGroups` 落为 `groups.auto_selectable=true`，运行时再叠加可用组过滤。
 - **group_cache：** 新增 `model/group_cache.go`，热路径通过缓存做 `group_id ↔ name`、倍率和限流读取。
-- **前端栈纠正：** 阶段 `4` 统一按 `web/default` 实际栈实现，不引入 `antd`。
+- **前端栈纠正：** 阶段 `4` 统一按 `web` 实际栈实现，不引入 `antd`。
 - **RetryParam：** 保持现有结构，分组信息通过 `Ctx` 里的 context key 传递。
 - **RateLimit 指针透传：** 管理列表直接透传模型上的 `*int` 指针，不在 controller 里构造局部变量地址。
 - **管理列表含停用组：** `GetGroups` 面向管理端返回全部分组；启用态过滤另行处理。
@@ -102,8 +102,8 @@
 - `model/group_cache.go`
 - `service/group_id.go`
 - `controller/group_id.go`
-- `web/default/src/features/system-settings/lib/group-api.ts`
-- `web/default/src/features/system-settings/types/group.ts`
+- `web/src/features/system-settings/lib/group-api.ts`
+- `web/src/features/system-settings/types/group.ts`
 
 ### 关键修改文件
 

@@ -6,7 +6,7 @@
 
 **架构：** 标准三方合并 `dev ← upstream/main`。合并基点为上次合并 commit `63888f08`（rc.16）。本地领先 64 commit（360AI 模型、敏感数据遮蔽、颜色预设系统、分组关系 ID 化重构、multikey 列、草稿状态等）。冲突集中在 5 个文件，其余 95 个 commit 涉及的上百文件由 git 自动合并。
 
-**技术栈：** git、bun（format/typecheck/build，前端在 `web/default/`）、go（build/vet，后端）。
+**技术栈：** git、bun（format/typecheck/build，前端在 `web/`）、go（build/vet，后端）。
 
 **合并前提（已满足）：** `git fetch upstream --tags` 已执行；`upstream/main` 指向 `7c28993f`，rc.21 tag = `8a784d7c`（rc.21 之后仅 2 个未发版小修，不合）。
 
@@ -16,9 +16,9 @@
 
 | 特性 | 文件 | 说明 |
 |---|---|---|
-| 颜色预设系统 | `web/default/src/styles/theme.css` + `theme-presets.css` + `index.html` | theme.css 定义 `default` 预设（黑白灰 OpenAI-like），用 `:root, [data-theme-preset='default']` 与 `.dark, .dark [data-theme-preset='default']` 选择器；theme-presets.css 定义 anthropic/underground/rose-garden 等 9 个预设 + 语义表面桥 + 字体轴 + 圆角/密度；index.html 有防首屏闪烁脚本 |
-| 分组关系 ID 化重构 | `web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx`、`model-ratio-form.tsx` 等 | 本地把 group 从字符串改为 ID 引用（见 docs/superpowers/plans/2026-06-19-group-relation-redesign-*） |
-| multikey 列显示 | `web/default/src/features/usage-logs/components/columns/common-logs-columns.tsx` + `lib/format.ts` | 用 `getMultiKeyIndex` 显示多键索引（merge-tree 预测此处 Auto-merging 无冲突，安全） |
+| 颜色预设系统 | `web/src/styles/theme.css` + `theme-presets.css` + `index.html` | theme.css 定义 `default` 预设（黑白灰 OpenAI-like），用 `:root, [data-theme-preset='default']` 与 `.dark, .dark [data-theme-preset='default']` 选择器；theme-presets.css 定义 anthropic/underground/rose-garden 等 9 个预设 + 语义表面桥 + 字体轴 + 圆角/密度；index.html 有防首屏闪烁脚本 |
+| 分组关系 ID 化重构 | `web/src/features/system-settings/models/group-ratio-visual-editor.tsx`、`model-ratio-form.tsx` 等 | 本地把 group 从字符串改为 ID 引用（见 docs/superpowers/plans/2026-06-19-group-relation-redesign-*） |
+| multikey 列显示 | `web/src/features/usage-logs/components/columns/common-logs-columns.tsx` + `lib/format.ts` | 用 `getMultiKeyIndex` 显示多键索引（merge-tree 预测此处 Auto-merging 无冲突，安全） |
 | CLAUDE.md | `CLAUDE.md` | superpowers-zh 框架、Rule 5（new-api/QuantumNous 品牌保护）、Rule 9（测试质量）。**上游 rc.16..rc.21 未触碰 CLAUDE.md，无冲突** |
 | 部署定制 | `docker-compose.yml` | `build: .`、端口 3003、`/home/docker/...` 路径、`localhost/` 镜像 |
 | 360AI 模型 / 敏感数据遮蔽 | `relay/`、`service/` 等 | 后端本地特性 |
@@ -77,9 +77,9 @@ git diff --name-only --diff-filter=U
 预期（基于 merge-tree dry-run，可能有出入）：
 ```
 docker-compose.yml
-web/default/index.html
-web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx
-web/default/src/features/system-settings/models/model-ratio-form.tsx
+web/index.html
+web/src/features/system-settings/models/group-ratio-visual-editor.tsx
+web/src/features/system-settings/models/model-ratio-form.tsx
 ```
 theme.css 预计 `Auto-merging` 无冲突，但需在任务 6 验证语义。若实际冲突文件多于上面，记录新增项并逐个按"本地必保优先、纯格式差异采纳上游"原则处理。
 
@@ -129,7 +129,7 @@ git diff --check docker-compose.yml
 
 ### 任务 4：解决 index.html
 
-**文件：** 修改 `web/default/index.html`
+**文件：** 修改 `web/index.html`
 
 **策略：** 融合——保留本地防首屏主题闪烁脚本，同时采纳上游 `28e0115a`（fix #5963）的 `translate="no"` / `notranslate`（防浏览器翻译破坏 React root）。两者不冲突：脚本操作 `document.body` 属性，translate 属性在 `#root`。
 
@@ -137,7 +137,7 @@ git diff --check docker-compose.yml
 
 运行：
 ```powershell
-git diff web/default/index.html
+git diff web/index.html
 ```
 
 - [ ] **步骤 2：手工编辑为融合结果**
@@ -197,7 +197,7 @@ git diff web/default/index.html
 
 运行：
 ```powershell
-git diff --check web/default/index.html
+git diff --check web/index.html
 ```
 预期：无输出。
 
@@ -205,7 +205,7 @@ git diff --check web/default/index.html
 
 ### 任务 5：解决 group-ratio-visual-editor.tsx + model-ratio-form.tsx（最重冲突）
 
-**文件：** 修改 `web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx`、`model-ratio-form.tsx`
+**文件：** 修改 `web/src/features/system-settings/models/group-ratio-visual-editor.tsx`、`model-ratio-form.tsx`
 
 **背景：** 这两个文件本地改动巨大（visual-editor 1486 行变化，是分组关系 ID 化重构的核心 UI）；上游也大改（`97bbb7c8` dynamic pricing with group selection、`fc26b88f` group ratio editor visibility rules + JSON parsing、`394b023d` group ratio input as string draft）。两线在同一文件交叠，冲突复杂。
 
@@ -215,8 +215,8 @@ git diff --check web/default/index.html
 
 运行：
 ```powershell
-git diff web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx
-git diff web/default/src/features/system-settings/models/model-ratio-form.tsx
+git diff web/src/features/system-settings/models/group-ratio-visual-editor.tsx
+git diff web/src/features/system-settings/models/model-ratio-form.tsx
 ```
 判断：冲突标记是否集中在少数 hunk（可手工拣选），还是遍布全文件（取 ours 整文件）。
 
@@ -231,8 +231,8 @@ git diff web/default/src/features/system-settings/models/model-ratio-form.tsx
 
 运行：
 ```powershell
-git checkout --ours -- web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx web/default/src/features/system-settings/models/model-ratio-form.tsx
-git add web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx web/default/src/features/system-settings/models/model-ratio-form.tsx
+git checkout --ours -- web/src/features/system-settings/models/group-ratio-visual-editor.tsx web/src/features/system-settings/models/model-ratio-form.tsx
+git add web/src/features/system-settings/models/group-ratio-visual-editor.tsx web/src/features/system-settings/models/model-ratio-form.tsx
 ```
 记录被放弃的上游改动（`97bbb7c8` dynamic pricing group selection、`fc26b88f` editor visibility、`394b023d` string draft），列入任务 9 的后续待办。
 
@@ -240,7 +240,7 @@ git add web/default/src/features/system-settings/models/group-ratio-visual-edito
 
 memory 教训：git 自动合并可能产生 `multiKeyIndex` 之类的重复定义。运行：
 ```powershell
-git grep -nE 'function (getMultiKeyIndex|multiKeyLabel)|const multiKeyIndex' web/default/src
+git grep -nE 'function (getMultiKeyIndex|multiKeyLabel)|const multiKeyIndex' web/src
 ```
 预期：每个符号仅一处定义。若重复，保留 `lib/format.ts` 中的权威定义，删除组件内重复。
 
@@ -248,7 +248,7 @@ git grep -nE 'function (getMultiKeyIndex|multiKeyLabel)|const multiKeyIndex' web
 
 运行：
 ```powershell
-git diff --check web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx web/default/src/features/system-settings/models/model-ratio-form.tsx
+git diff --check web/src/features/system-settings/models/group-ratio-visual-editor.tsx web/src/features/system-settings/models/model-ratio-form.tsx
 ```
 预期：无输出。
 
@@ -256,18 +256,18 @@ git diff --check web/default/src/features/system-settings/models/group-ratio-vis
 
 ### 任务 6：验证 theme.css 颜色预设语义（关键，即使无冲突标记）
 
-**文件：** 检查 `web/default/src/styles/theme.css`、`theme-presets.css`
+**文件：** 检查 `web/src/styles/theme.css`、`theme-presets.css`
 
 **背景：** merge-tree 预测 theme.css `Auto-merging` 无冲突，但因本地与上游在 `:root`/`.dark` 颜色块上几乎全行不同，自动合并结果需人工核验语义。上游新增 `--overview-accent-1/2/3`（被 `overview-dashboard.tsx`/`summary-cards.tsx`/`stat-card.tsx` 引用），本地缺失会导致概览卡片缺色。
 
 - [ ] **步骤 1：确认 default 预设架构完整**
 
-打开 `web/default/src/styles/theme.css`，确认：
+打开 `web/src/styles/theme.css`，确认：
 - `:root` 块选择器为 `:root, [data-theme-preset='default']`（本地架构，非上游的纯 `:root`）
 - `.dark` 块选择器为 `.dark, .dark [data-theme-preset='default']`
 - `--primary: oklch(0.13 0 0)`（本地黑白灰 default，非上游蓝色 `oklch(0.692 0.141 243.716)`）
 
-若上游蓝色值覆盖了本地 default 值，手动改回本地黑白灰值（参考合并前 `git show dev-backup-rc16:web/default/src/styles/theme.css`）。
+若上游蓝色值覆盖了本地 default 值，手动改回本地黑白灰值（参考合并前 `git show dev-backup-rc16:web/src/styles/theme.css`）。
 
 - [ ] **步骤 2：补齐 overview-accent 变量**
 
@@ -298,7 +298,7 @@ git diff --check web/default/src/features/system-settings/models/group-ratio-vis
 
 运行：
 ```powershell
-git diff --stat HEAD web/default/src/styles/theme-presets.css
+git diff --stat HEAD web/src/styles/theme-presets.css
 ```
 若上游改动了 theme-presets.css（上游也定义了 overview-accent），核对本地 anthropic/underground/rose-garden 等 9 个预设块完整、语义表面桥的 `:not()` opt-out 列表含 `default`/`anthropic`/`simple-large`。
 
@@ -306,7 +306,7 @@ git diff --stat HEAD web/default/src/styles/theme-presets.css
 
 运行：
 ```powershell
-git grep -n 'overview-accent' web/default/src
+git grep -n 'overview-accent' web/src
 ```
 确认 `theme.css`（default 定义）+ `theme-presets.css`（预设定义）覆盖了 `overview-dashboard.tsx`/`summary-cards.tsx`/`stat-card.tsx` 引用的全部 3 个变量，无悬空引用。
 
@@ -320,7 +320,7 @@ git grep -n 'overview-accent' web/default/src
 
 运行：
 ```powershell
-git add docker-compose.yml web/default/index.html web/default/src/features/system-settings/models/group-ratio-visual-editor.tsx web/default/src/features/system-settings/models/model-ratio-form.tsx web/default/src/styles/theme.css web/default/src/styles/theme-presets.css
+git add docker-compose.yml web/index.html web/src/features/system-settings/models/group-ratio-visual-editor.tsx web/src/features/system-settings/models/model-ratio-form.tsx web/src/styles/theme.css web/src/styles/theme-presets.css
 ```
 
 - [ ] **步骤 2：确认无遗留冲突**
@@ -335,13 +335,13 @@ git diff --name-only --diff-filter=U
 
 ### 任务 8：格式化处理（memory 流程）
 
-**文件：** 可能调整 `web/default/**` 格式
+**文件：** 可能调整 `web/**` 格式
 
 - [ ] **步骤 1：运行 format**
 
-在 `web/default/` 目录运行：
+在 `web/` 目录运行：
 ```powershell
-Set-Location web/default
+Set-Location web
 bun run format
 Set-Location ..\..
 ```
@@ -351,13 +351,13 @@ Set-Location ..\..
 
 运行：
 ```powershell
-Set-Location web/default
+Set-Location web
 bun run format:check
 Set-Location ..\..
 ```
 预期：exit 0。若失败，将 format 改动并入暂存（dev 未 push，amend 安全）：
 ```powershell
-git add web/default
+git add web
 ```
 
 - [ ] **步骤 3（仅参考，不强制修）：lint 历史遗留**
@@ -374,7 +374,7 @@ git add web/default
 
 运行：
 ```powershell
-Set-Location web/default
+Set-Location web
 bun run typecheck
 Set-Location ..\..
 ```
@@ -384,7 +384,7 @@ Set-Location ..\..
 
 运行：
 ```powershell
-Set-Location web/default
+Set-Location web
 bun run build
 Set-Location ..\..
 ```
@@ -410,7 +410,7 @@ go vet ./...
 
 构建可能改写生成文件，再次确认 format:check：
 ```powershell
-Set-Location web/default
+Set-Location web
 bun run format:check
 Set-Location ..\..
 ```

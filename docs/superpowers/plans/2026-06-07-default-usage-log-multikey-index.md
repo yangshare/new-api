@@ -12,24 +12,24 @@
 
 ## 文件结构
 
-- 修改：`web/default/src/features/usage-logs/lib/format.ts`
+- 修改：`web/src/features/usage-logs/lib/format.ts`
   - 职责：新增 `getMultiKeyIndex`，统一判断日志 `other` 是否应展示多 key index。
-- 创建：`web/default/src/features/usage-logs/lib/format-multikey.test.ts`
+- 创建：`web/src/features/usage-logs/lib/format-multikey.test.ts`
   - 职责：覆盖 `getMultiKeyIndex` 的显示和隐藏条件。
-- 修改：`web/default/src/features/usage-logs/components/columns/common-logs-columns.tsx`
+- 修改：`web/src/features/usage-logs/components/columns/common-logs-columns.tsx`
   - 职责：在 admin common logs 的 Channel cell 中展示 `K{index}` 小标签。
-- 修改：`web/default/src/features/usage-logs/components/dialogs/details-dialog.tsx`
+- 修改：`web/src/features/usage-logs/components/dialogs/details-dialog.tsx`
   - 职责：在详情弹窗的 admin Channel 行中展示同样的 `K{index}` 小标签。
 
 ## 任务 1：添加 multi-key index 解析 helper
 
 **文件：**
-- 修改：`web/default/src/features/usage-logs/lib/format.ts`
-- 创建：`web/default/src/features/usage-logs/lib/format-multikey.test.ts`
+- 修改：`web/src/features/usage-logs/lib/format.ts`
+- 创建：`web/src/features/usage-logs/lib/format-multikey.test.ts`
 
 - [ ] **步骤 1：编写失败的测试**
 
-创建 `web/default/src/features/usage-logs/lib/format-multikey.test.ts`，内容如下：
+创建 `web/src/features/usage-logs/lib/format-multikey.test.ts`，内容如下：
 
 ```ts
 /*
@@ -119,7 +119,7 @@ describe('getMultiKeyIndex', () => {
 运行：
 
 ```bash
-cd web/default
+cd web
 bun test src/features/usage-logs/lib/format-multikey.test.ts
 ```
 
@@ -127,7 +127,7 @@ bun test src/features/usage-logs/lib/format-multikey.test.ts
 
 - [ ] **步骤 3：编写最少实现代码**
 
-在 `web/default/src/features/usage-logs/lib/format.ts` 的 `parseLogOther` 函数后添加：
+在 `web/src/features/usage-logs/lib/format.ts` 的 `parseLogOther` 函数后添加：
 
 ```ts
 /**
@@ -152,7 +152,7 @@ export function getMultiKeyIndex(
 运行：
 
 ```bash
-cd web/default
+cd web
 bun test src/features/usage-logs/lib/format-multikey.test.ts
 ```
 
@@ -161,22 +161,22 @@ bun test src/features/usage-logs/lib/format-multikey.test.ts
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add web/default/src/features/usage-logs/lib/format.ts web/default/src/features/usage-logs/lib/format-multikey.test.ts
+git add web/src/features/usage-logs/lib/format.ts web/src/features/usage-logs/lib/format-multikey.test.ts
 git commit -m "test(web): cover usage log multikey index parsing"
 ```
 
 ## 任务 2：在 common logs 渠道列显示 key index 标签
 
 **文件：**
-- 修改：`web/default/src/features/usage-logs/components/columns/common-logs-columns.tsx`
-- 测试：`web/default/src/features/usage-logs/lib/format-multikey.test.ts`
+- 修改：`web/src/features/usage-logs/components/columns/common-logs-columns.tsx`
+- 测试：`web/src/features/usage-logs/lib/format-multikey.test.ts`
 
 - [ ] **步骤 1：运行现有 helper 测试建立基线**
 
 运行：
 
 ```bash
-cd web/default
+cd web
 bun test src/features/usage-logs/lib/format-multikey.test.ts
 ```
 
@@ -184,7 +184,7 @@ bun test src/features/usage-logs/lib/format-multikey.test.ts
 
 - [ ] **步骤 2：导入 helper**
 
-在 `web/default/src/features/usage-logs/components/columns/common-logs-columns.tsx` 现有 `../../lib/format` 导入列表中加入 `getMultiKeyIndex`：
+在 `web/src/features/usage-logs/components/columns/common-logs-columns.tsx` 现有 `../../lib/format` 导入列表中加入 `getMultiKeyIndex`：
 
 ```ts
 import {
@@ -263,7 +263,7 @@ Keep the existing affinity button block unchanged after this insertion.
 运行：
 
 ```bash
-cd web/default
+cd web
 bun run typecheck
 ```
 
@@ -272,19 +272,19 @@ bun run typecheck
 - [ ] **步骤 6：Commit**
 
 ```bash
-git add web/default/src/features/usage-logs/components/columns/common-logs-columns.tsx
+git add web/src/features/usage-logs/components/columns/common-logs-columns.tsx
 git commit -m "feat(web): show multikey index in usage log channels"
 ```
 
 ## 任务 3：在详情弹窗 Channel 行显示 key index 标签
 
 **文件：**
-- 修改：`web/default/src/features/usage-logs/components/dialogs/details-dialog.tsx`
-- 测试：`web/default/src/features/usage-logs/lib/format-multikey.test.ts`
+- 修改：`web/src/features/usage-logs/components/dialogs/details-dialog.tsx`
+- 测试：`web/src/features/usage-logs/lib/format-multikey.test.ts`
 
 - [ ] **步骤 1：导入 helper**
 
-在 `web/default/src/features/usage-logs/components/dialogs/details-dialog.tsx` 的 `../../lib/format` 导入列表中加入 `getMultiKeyIndex`：
+在 `web/src/features/usage-logs/components/dialogs/details-dialog.tsx` 的 `../../lib/format` 导入列表中加入 `getMultiKeyIndex`：
 
 ```ts
 import {
@@ -364,7 +364,7 @@ value={
 运行：
 
 ```bash
-cd web/default
+cd web
 bun test src/features/usage-logs/lib/format-multikey.test.ts
 bun run typecheck
 ```
@@ -374,20 +374,20 @@ bun run typecheck
 - [ ] **步骤 5：Commit**
 
 ```bash
-git add web/default/src/features/usage-logs/components/dialogs/details-dialog.tsx
+git add web/src/features/usage-logs/components/dialogs/details-dialog.tsx
 git commit -m "feat(web): show multikey index in usage log details"
 ```
 
 ## 任务 4：最终验证
 
 **文件：**
-- 验证：`web/default/package.json`
-- 验证：`web/default/src/features/usage-logs/components/usage-logs-mobile-card.tsx`
+- 验证：`web/package.json`
+- 验证：`web/src/features/usage-logs/components/usage-logs-mobile-card.tsx`
 
 - [ ] **步骤 1：运行 usage logs helper 测试**
 
 ```bash
-cd web/default
+cd web
 bun test src/features/usage-logs/lib/format-multikey.test.ts
 ```
 
@@ -396,7 +396,7 @@ bun test src/features/usage-logs/lib/format-multikey.test.ts
 - [ ] **步骤 2：运行 lint**
 
 ```bash
-cd web/default
+cd web
 bun run lint
 ```
 
@@ -405,7 +405,7 @@ bun run lint
 - [ ] **步骤 3：运行完整构建检查**
 
 ```bash
-cd web/default
+cd web
 bun run build:check
 ```
 
@@ -413,7 +413,7 @@ bun run build:check
 
 - [ ] **步骤 4：人工检查移动端继承路径**
 
-检查 `web/default/src/features/usage-logs/components/usage-logs-mobile-card.tsx`：
+检查 `web/src/features/usage-logs/components/usage-logs-mobile-card.tsx`：
 
 ```tsx
 <SummaryField

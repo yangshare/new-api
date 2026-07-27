@@ -330,7 +330,7 @@ type GroupGroupRatio struct {
 
 ## 8. 前端改造
 
-- **新增「分组管理」页**（`web/default/src/features/system-settings/` 下）：列表 + 增删改查 + 改名 + 启停 + 倍率编辑 + 排序。`is_default=true` 分组的删除 / 停用按钮禁用。
+- **新增「分组管理」页**（`web/src/features/system-settings/` 下）：列表 + 增删改查 + 改名 + 启停 + 倍率编辑 + 排序。`is_default=true` 分组的删除 / 停用按钮禁用。
 - **用户编辑**：`group` 文本输入 → **单选下拉**（数据源 `GET /api/group/`）。
 - **渠道编辑**：`group` 逗号串文本输入 → **多选下拉**（数据源同上），提交 `group_ids` 数组。
 - **Token 编辑**：新增模式选择（跟随用户 / 固定分组 / 自动分组）；固定分组时显示单选分组下拉，自动分组时显示跨分组重试设置。
