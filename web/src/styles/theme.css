@@ -164,7 +164,7 @@ For commercial licensing, please contact support@quantumnous.com
      alert state. */
   --table-disabled: color-mix(
     in oklch,
-    var(--foreground) 3%,
+    var(--foreground) 5.5%,
     var(--background)
   );
   --table-disabled-hover: color-mix(
@@ -236,7 +236,7 @@ For commercial licensing, please contact support@quantumnous.com
   );
   --table-disabled: color-mix(
     in oklch,
-    var(--foreground) 7%,
+    var(--foreground) 10%,
     var(--background)
   );
   --table-disabled-hover: color-mix(
