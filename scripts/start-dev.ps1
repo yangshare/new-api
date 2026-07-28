@@ -140,8 +140,11 @@ $backendOutLog = Join-Path $devLogDir "dev-backend.out.log"
 "" | Set-Content -Path $backendErrLog -Encoding UTF8
 "" | Set-Content -Path $backendOutLog -Encoding UTF8
 
+# 注意：必须用 "go run ." 编译整个 package main，而非 "go run main.go"（单文件）。
+# 单文件模式不会纳入同目录的兄弟文件（如 trusted_proxies.go），会导致 main.go 里的
+# configureTrustedProxies 等同包符号报 undefined。
 $backendProcess = Start-Process -FilePath "go" `
-    -ArgumentList "run", "main.go" `
+    -ArgumentList "run", "." `
     -WorkingDirectory $BackendRoot `
     -WindowStyle Hidden `
     -RedirectStandardError $backendErrLog `
