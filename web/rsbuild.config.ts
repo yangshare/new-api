@@ -67,6 +67,9 @@ export default defineConfig(({ envMode }) => {
     },
     server: {
       host: '0.0.0.0',
+      // 与 Go 后端默认的 3000 端口错开，避免 dev server 先占用 3000 导致后端 bind 失败退出、
+      // 前端 /api 代理又回环到自身造成请求挂起。前端走 5173，/api 由 proxy 转发到后端 3000。
+      port: 5173,
       strictPort: false,
       proxy: devProxy,
     },
