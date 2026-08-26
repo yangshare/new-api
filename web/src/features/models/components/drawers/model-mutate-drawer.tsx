@@ -417,6 +417,7 @@ export function ModelMutateDrawer({
   useEffect(() => {
     if (open && isEditing && modelData?.data) {
       const model = modelData.data
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOldModelName(model.model_name)
 
       const pricing = readPricingConfig(

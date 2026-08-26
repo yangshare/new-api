@@ -134,6 +134,7 @@ export function FetchModelsDialog({
 
   useEffect(() => {
     if (open && (activeChannel || customFetcher)) {
+      // eslint-disable-next-line react-hooks/immutability
       handleFetchModels()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -484,7 +485,7 @@ export function FetchModelsDialog({
       onOpenChange={handleClose}
       title={t('Fetch Models')}
       description={dialogDescription}
-      contentClassName='max-w-3xl'
+      contentClassName='sm:max-w-3xl'
       contentHeight='auto'
       bodyClassName='space-y-4'
       footer={

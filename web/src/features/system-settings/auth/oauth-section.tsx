@@ -368,8 +368,10 @@ export function OAuthSection(props: OAuthSectionProps) {
 
       <SettingsSection title={t('OAuth Integrations')}>
         <Form {...form}>
+          {/* eslint-disable-next-line react-hooks/refs */}
           <SettingsForm onSubmit={form.handleSubmit(onSubmit)}>
             <SettingsPageFormActions
+              // eslint-disable-next-line react-hooks/refs
               onSave={form.handleSubmit(onSubmit)}
               onReset={handleReset}
               isSaving={updateOption.isPending}

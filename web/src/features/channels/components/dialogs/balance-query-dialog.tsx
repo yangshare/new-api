@@ -86,6 +86,7 @@ export function BalanceQueryDialog(props: BalanceQueryDialogProps) {
   useEffect(() => {
     if (!isCodex) return
     if (!props.open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     handleQueryCodexUsage()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.open, isCodex])

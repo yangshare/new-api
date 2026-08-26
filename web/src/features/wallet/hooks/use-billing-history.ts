@@ -156,6 +156,7 @@ export function useBillingHistory(options: UseBillingHistoryOptions = {}) {
   useEffect(() => {
     if (keyword !== debouncedKeyword) return
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBillingHistory()
   }, [debouncedKeyword, fetchBillingHistory, keyword])
 
