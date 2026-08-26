@@ -325,3 +325,57 @@ routing-reliability-section 本地改进（防止 defaultValues 外部刷新后 
 6. `Updated; synced {{count}} active subscriptions`
 
 七语译文以 `dev-backup-pre-sync` 分支的 locale 文件为源，注入脚本见计划任务 9（比较 backup 与当前文件、按字母序插回、保持 2 空格缩进与结尾换行）。键 1/5/6 服务于 B8；键 2/3/4 服务于 ratio 表单草稿交互；任何人新增 UI 文案时，对应键值必须当次补录（开发习惯条款）。
+
+## C 类：主动放弃的上游特性（每轮合并重新决策，防静默带回）
+
+| # | 特性 | 放弃原因 | 涉及文件与本轮剔除动作 |
+|---|---|---|---|
+| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口 | 取上游版后在 `section-registry.tsx` 把 Model Pricing 的 visibleTabs 数组删去 `'unset-models'`；在 `ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支（连同 `variant=` 属性行）删去 unset-models 相关成员。具体代码见手册随附计划任务 6 |
+| C2 | superpowers-zh 框架段（CLAUDE.md） | 2026-07-14 主动删除 | 若任何来源试图恢复 CLAUDE.md 该段落，拒绝并维持删除状态 |
+
+## 锚点速查索引（第 4 步机械校验用；PowerShell 直接粘贴）
+
+```powershell
+$pairs = @(
+  @('setting/ratio_setting/model_ratio.go','360GPT_S2_V9')
+  @('web/src/features/usage-logs/lib/format.ts','getMultiKeyIndex')
+  @('web/src/features/usage-logs/lib/format-multikey.test.ts','getMultiKeyIndex')
+  @('web/src/features/usage-logs/components/dialogs/details-dialog.tsx','multiKeyLabel')
+  @('web/src/features/system-settings/types.ts','UpdateOptionMutationRequest')
+  @('web/src/features/system-settings/hooks/use-update-option.ts','silent')
+  @('web/src/features/system-settings/lib/update-option-results.ts','didAllOptionUpdatesSucceed')
+  @('web/src/styles/theme.css','oklch(0.13 0 0)')
+  @('CLAUDE.md','Rule 9')
+  @('.github/workflows/release.yml','dockeronly')
+  @('.github/workflows/electron-build.yml','dockeronly')
+  @('.gitignore','*.rej')
+  @('Dockerfile','oven/bun:latest')
+  @('model/subscription.go','SyncPlanSubscriptionsTx')
+  @('controller/subscription.go','SyncPlanSubscriptionsTx')
+  @('model/subscription_sync_test.go','SyncPlanSubscriptionsTx')
+  @('service/channel_affinity_usage_cache_test.go','uniqueChannelAffinityUsageCacheTestID')
+  @('web/src/features/users/components/dialogs/user-binding-dialog.tsx','set-state-in-effect')
+  @('web/src/i18n/locales/en.json','Updated; synced {{count}} active subscriptions')
+  @('web/src/i18n/locales/zh.json','将变更同步到已绑定订阅')
+)
+foreach ($p in $pairs) {
+  $hit = (Select-String -Path $p[0] -Pattern $p[1] -SimpleMatch | Measure-Object).Count
+  if ($hit -ge 1) { "PASS $($p[0]) <- $($p[1])" } else { "FAIL $($p[0]) <- $($p[1])" }
+}
+```
+
+反向断言（C 类确已缺席，二者都应 FAIL=True）：
+`Select-String -Path web/src/features/system-settings/models/ratio-settings-card.tsx -Pattern 'unset-models' -SimpleMatch` 无命中；
+`Select-String -Path CLAUDE.md -Pattern 'superpowers-zh' -SimpleMatch` 无命中。
+
+## 手册维护纪律
+
+1. 任何在 B/C 清单之外产生的本地新个性化（无论文件内条目还是整文件），合入当次必须同 commit 或紧随 commit 补录手册，并给 grep 锚点。
+2. 每轮同步收尾时：更新 `$replayFiles` 与锚点索引为当次真实状态；把当次 merge-base 与 upstream 领先数写入本节下方「轮次记录」。
+3. 「提取命令」惯例：历史真相永远在 `dev-backup-pre-sync`，手册描述原则，提取命令交付字节。
+
+## 轮次记录
+
+| 日期 | merge-base | upstream 领先 | 备注 |
+|---|---|---|---|
+| 2026-08-26 | bc14c18f6024e79cba1c08d02cd007796e12d668 | 83 commits | 手册首轮实战；封面考古结论：嵌套计费属共享基底；B 清单定稿 B1-B11 |
