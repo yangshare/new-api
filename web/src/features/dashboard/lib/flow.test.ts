@@ -691,6 +691,28 @@ describe('dashboard flow data', () => {
     ).toBe(true)
   })
 
+  test('masks sensitive filter labels when sensitive data is hidden', () => {
+    const result = buildDashboardFlowData(rows, 'quota', {
+      role: 'root',
+      maskSensitive: true,
+    })
+
+    expect(result.filterOptions.users.map((user) => user.label)).toEqual([
+      '••••',
+      '••••',
+    ])
+    const sensitiveNodeLabels = result.filterOptions.nodes
+      .filter((node) => node.kind !== 'model')
+      .map((node) => node.label)
+    expect(sensitiveNodeLabels).toHaveLength(10)
+    expect(sensitiveNodeLabels.every((label) => label === '••••')).toBe(true)
+    expect(
+      result.filterOptions.nodes
+        .filter((node) => node.kind === 'model')
+        .map((node) => node.label)
+    ).toEqual(['gpt-4.1', 'claude-4-sonnet'])
+  })
+
   test('builds Sankey spec with quota token request tooltips', () => {
     const result = buildDashboardFlowData(rows.slice(0, 1), 'quota', {
       role: 'root',
