@@ -5316,6 +5316,12 @@
     "Zero retention": "Без хранения данных",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Apply changes to existing subscriptions": "Применить изменения к существующим подпискам",
+    "Pricing changes saved to draft. Click \"Save model prices\" to apply.": "Изменения цен сохранены в черновик. Нажмите «Сохранить цены моделей», чтобы применить.",
+    "Draft": "Черновик",
+    "Will be removed": "Будет удалено",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "Синхронизировать новую квоту и период сброса с активными подписчиками. Использованная квота сохраняется.",
+    "Updated; synced {{count}} active subscriptions": "Обновлено; синхронизировано активных подписок: {{count}}"
   }
 }

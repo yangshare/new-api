@@ -5316,6 +5316,12 @@
     "Zero retention": "データ保持なし",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V 4",
-    "Zoom": "ズーム"
+    "Zoom": "ズーム",
+    "Apply changes to existing subscriptions": "既存のサブスクリプションに変更を適用",
+    "Pricing changes saved to draft. Click \"Save model prices\" to apply.": "価格変更が下書きに保存されました。「モデル価格を保存」をクリックして適用します。",
+    "Draft": "下書き",
+    "Will be removed": "削除予定",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "新しいクォータとリセット期間を有効な購読者に同期します。使用済みクォータは保持されます。",
+    "Updated; synced {{count}} active subscriptions": "更新済み。{{count}} 件の有効なサブスクリプションを同期しました"
   }
 }

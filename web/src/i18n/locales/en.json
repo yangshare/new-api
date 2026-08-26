@@ -5316,6 +5316,12 @@
     "Zero retention": "Zero retention",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Apply changes to existing subscriptions": "Apply changes to existing subscriptions",
+    "Pricing changes saved to draft. Click \"Save model prices\" to apply.": "Pricing changes saved to draft. Click \"Save model prices\" to apply.",
+    "Draft": "Draft",
+    "Will be removed": "Will be removed",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "Sync the new quota and reset period to active subscribers. Used quota is kept.",
+    "Updated; synced {{count}} active subscriptions": "Updated; synced {{count}} active subscriptions"
   }
 }

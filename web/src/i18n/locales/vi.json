@@ -5316,6 +5316,12 @@
     "Zero retention": "Không lưu dữ liệu",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Apply changes to existing subscriptions": "Áp dụng thay đổi cho các gói đăng ký hiện có",
+    "Pricing changes saved to draft. Click \"Save model prices\" to apply.": "Thay đổi giá đã được lưu vào bản nháp. Nhấp vào \"Lưu giá mô hình\" để áp dụng.",
+    "Draft": "Bản nháp",
+    "Will be removed": "Sẽ bị xóa",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "Đồng bộ hạn ngạch và chu kỳ đặt lại mới cho người đăng ký đang hoạt động. Hạn ngạch đã dùng được giữ nguyên.",
+    "Updated; synced {{count}} active subscriptions": "Đã cập nhật; đã đồng bộ {{count}} gói đăng ký đang hoạt động"
   }
 }

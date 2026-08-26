@@ -5316,6 +5316,12 @@
     "Zero retention": "零數據保留",
     "Zhipu": "智譜",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Apply changes to existing subscriptions": "將變更套用至現有訂閱",
+    "Pricing changes saved to draft. Click \"Save model prices\" to apply.": "定價變更已儲存為草稿。點擊「儲存模型價格」以套用。",
+    "Draft": "草稿",
+    "Will be removed": "將被移除",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "將新的額度與重置週期同步至使用中的訂閱，已用額度會保留。",
+    "Updated; synced {{count}} active subscriptions": "已更新；已同步 {{count}} 個使用中的訂閱"
   }
 }
