@@ -4,6 +4,7 @@
 .history
 upload
 *.exe
+*.rej
 *.db
 build
 *.db-journal
@@ -20,9 +21,9 @@ tiktoken_cache
 .gocache
 .gomodcache/
 .cache
-plans
 .claude
 .cursor
+.superpowers
 
 electron/node_modules
 electron/dist
@@ -34,6 +35,8 @@ electron/dist
 token_estimator_test.go
 skills-lock.json
 .playwright-mcp
+.codegraph/
+.zcode/
 
 # Local-only live probes and scratch test workspaces.
 .local-tests/
