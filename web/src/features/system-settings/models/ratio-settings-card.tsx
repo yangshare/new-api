@@ -31,6 +31,7 @@ import { resetModelRatios } from '../api'
 import { SettingsPageTitleStatusPortal } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
+import { didAllOptionUpdatesSucceed } from '../lib/update-option-results'
 import { positiveIntegerSchema } from '../utils/numeric-field'
 import { GroupRatioForm } from './group-ratio-form'
 import { ModelRatioForm } from './model-ratio-form'
@@ -140,7 +141,6 @@ type ModelFormValues = z.infer<ReturnType<typeof createModelSchema>>
 type GroupFormValues = z.infer<ReturnType<typeof createGroupSchema>>
 type RatioTabId =
   | 'models'
-  | 'unset-models'
   | 'groups'
   | 'tool-prices'
   | 'upstream-sync'
@@ -345,9 +345,18 @@ export function RatioSettingsCard({
         return
       }
 
+      const results = []
       for (const key of updates) {
-        const apiKey = apiKeyMap[key as string] || (key as string)
-        await updateOption.mutateAsync({ key: apiKey, value: normalized[key] })
+        const result = await updateOption.mutateAsync({
+          key: apiKeyMap[key as string] || (key as string),
+          value: normalized[key],
+          silent: true,
+        })
+        results.push(result)
+        if (!result.success) return
+      }
+      if (results.length > 0 && didAllOptionUpdatesSucceed(results)) {
+        toast.success(t('Setting updated successfully'))
       }
 
       modelNormalizedDefaults.current = normalized
@@ -383,14 +392,23 @@ export function RatioSettingsCard({
         (key) => normalized[key] !== groupNormalizedDefaults.current[key]
       )
 
+      const results = []
       for (const key of updates) {
-        const apiKey = apiKeyMap[key] || key
-        await updateOption.mutateAsync({ key: apiKey, value: normalized[key] })
+        const result = await updateOption.mutateAsync({
+          key: apiKeyMap[key] || key,
+          value: normalized[key],
+          silent: true,
+        })
+        results.push(result)
+        if (!result.success) return
+      }
+      if (results.length > 0 && didAllOptionUpdatesSucceed(results)) {
+        toast.success(t('Setting updated successfully'))
       }
 
       groupNormalizedDefaults.current = normalized
     },
-    [updateOption]
+    [t, updateOption]
   )
 
   const handleResetRatios = useCallback(() => {
@@ -404,7 +422,6 @@ export function RatioSettingsCard({
 
   const tabLabels: Record<RatioTabId, string> = {
     models: 'Model prices',
-    'unset-models': 'Unset price models',
     groups: 'Group ratios',
     'tool-prices': 'Tool prices',
     'upstream-sync': 'Upstream price sync',
@@ -420,7 +437,7 @@ export function RatioSettingsCard({
   const defaultTab = visibleTabs[0] ?? 'models'
 
   const renderTabContent = (tab: RatioTabId) => {
-    if (tab === 'models' || tab === 'unset-models') {
+    if (tab === 'models') {
       return (
         <ModelRatioForm
           form={modelForm}
@@ -429,7 +446,6 @@ export function RatioSettingsCard({
           onReset={handleResetRatios}
           isSaving={updateOption.isPending}
           isResetting={resetMutation.isPending}
-          variant={tab === 'unset-models' ? 'unset' : 'default'}
         />
       )
     }
