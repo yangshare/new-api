@@ -107,8 +107,6 @@ var defaultModelRatio = map[string]float64{
 	"gpt-3.5-turbo-instruct":                    0.75, // $0.0015 / 1K tokens
 	"gpt-3.5-turbo-1106":                        0.5,  // $0.001 / 1K tokens
 	"gpt-3.5-turbo-0125":                        0.25,
-	"babbage-002":                               0.2,
-	"davinci-002":                               1,
 	"text-ada-001":                              0.2,
 	"text-babbage-001":                          0.25,
 	"text-curie-001":                            1,
@@ -121,8 +119,6 @@ var defaultModelRatio = map[string]float64{
 	"tts-1-hd-1106":                             15,  // 1k characters -> $0.03
 	"davinci":                                   10,
 	"curie":                                     10,
-	"babbage":                                   10,
-	"ada":                                       10,
 	"text-embedding-3-small":                    0.01,
 	"text-embedding-3-large":                    0.065,
 	"text-embedding-ada-002":                    0.05,
@@ -220,14 +216,6 @@ var defaultModelRatio = map[string]float64{
 	"SparkDesk-v3.1":                            1.2858, // ￥0.018 / 1k tokens
 	"SparkDesk-v3.5":                            1.2858, // ￥0.018 / 1k tokens
 	"SparkDesk-v4.0":                            1.2858,
-	"360GPT_S2_V9":                              0.8572,
-	"360gpt-turbo":                              0.0858,
-	"360gpt-turbo-responsibility-8k":            0.8572,
-	"360gpt-pro":                                0.8572,
-	"360gpt2-pro":                               0.8572,
-	"embedding-bert-512-v1":                     0.0715,
-	"embedding_s1_v1":                           0.0715,
-	"semantic_similarity_s1_v1":                 0.0715,
 	"hunyuan":                                   7.143, // ¥0.1 / 1k tokens  // https://cloud.tencent.com/document/product/1729/97731#e0e6be58-60c8-469f-bdeb-6c264ce3b4d0
 	// https://platform.lingyiwanwu.com/docs#-计费单元
 	// 已经按照 7.2 来换算美元价格
@@ -376,17 +364,6 @@ func GetModelPrice(name string, printErr bool) (float64, bool) {
 		return price, true
 	}
 
-	if strings.HasSuffix(name, CompactModelSuffix) {
-		price, ok := modelPriceMap.Get(CompactWildcardModelKey)
-		if !ok {
-			if printErr {
-				common.SysError("model price not found: " + name)
-			}
-			return -1, false
-		}
-		return price, true
-	}
-
 	if printErr {
 		common.SysError("model price not found: " + name)
 	}
@@ -410,12 +387,6 @@ func GetModelRatio(name string) (float64, bool, string) {
 
 	ratio, ok := modelRatioMap.Get(name)
 	if !ok {
-		if strings.HasSuffix(name, CompactModelSuffix) {
-			if wildcardRatio, ok := modelRatioMap.Get(CompactWildcardModelKey); ok {
-				return wildcardRatio, true, name
-			}
-			//return 0, true, name
-		}
 		return 37.5, operation_setting.SelfUseModeEnabled, name
 	}
 	return ratio, true, name

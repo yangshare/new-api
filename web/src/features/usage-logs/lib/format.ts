@@ -167,27 +167,23 @@ export function parseLogOther(other: string): LogOtherData | null {
   }
 }
 
-/**
- * Extract the selected multi-key index from parsed log metadata.
- *
- * The value is a key-list index, not a database ID or secret key content.
- */
-export function getMultiKeyIndex(
-  other: LogOtherData | null | undefined
-): number | null {
-  if (other?.admin_info?.is_multi_key !== true) return null
-
-  const index = other.admin_info.multi_key_index
-  if (
-    typeof index !== 'number' ||
-    !Number.isFinite(index) ||
-    !Number.isInteger(index) ||
-    index < 0
-  ) {
-    return null
+export function getReasoningEffortVariant(
+  effort: string | undefined
+): StatusBadgeProps['variant'] {
+  switch (effort?.trim().toLowerCase()) {
+    case 'max':
+    case 'xhigh':
+    case 'high':
+      return 'orange'
+    case 'medium':
+      return 'yellow'
+    case 'low':
+    case 'minimal':
+      return 'green'
+    case 'none':
+    default:
+      return 'grey'
   }
-
-  return index
 }
 
 /**

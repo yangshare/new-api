@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/QuantumNous/new-api/dto"
-	"github.com/QuantumNous/new-api/types"
+	"github.com/QuantumNous/new-api/relaykit/dto"
+	"github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,14 +25,10 @@ func buildChannelAffinityStatsContextForTest(ruleName, usingGroup, keyFP string)
 	return ctx
 }
 
-func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
-	return prefix + "_" + uuid.NewString()
-}
-
 func TestObserveChannelAffinityUsageCacheByRelayFormat_ClaudeMode(t *testing.T) {
-	ruleName := uniqueChannelAffinityUsageCacheTestID("rule")
+	ruleName := fmt.Sprintf("rule_%d", time.Now().UnixNano())
 	usingGroup := "default"
-	keyFP := uniqueChannelAffinityUsageCacheTestID("fp")
+	keyFP := fmt.Sprintf("fp_%d", time.Now().UnixNano())
 	ctx := buildChannelAffinityStatsContextForTest(ruleName, usingGroup, keyFP)
 
 	usage := &dto.Usage{
@@ -57,9 +53,9 @@ func TestObserveChannelAffinityUsageCacheByRelayFormat_ClaudeMode(t *testing.T) 
 }
 
 func TestObserveChannelAffinityUsageCacheByRelayFormat_MixedMode(t *testing.T) {
-	ruleName := uniqueChannelAffinityUsageCacheTestID("rule")
+	ruleName := fmt.Sprintf("rule_%d", time.Now().UnixNano())
 	usingGroup := "default"
-	keyFP := uniqueChannelAffinityUsageCacheTestID("fp")
+	keyFP := fmt.Sprintf("fp_%d", time.Now().UnixNano())
 	ctx := buildChannelAffinityStatsContextForTest(ruleName, usingGroup, keyFP)
 
 	openAIUsage := &dto.Usage{
@@ -87,9 +83,9 @@ func TestObserveChannelAffinityUsageCacheByRelayFormat_MixedMode(t *testing.T) {
 }
 
 func TestObserveChannelAffinityUsageCacheByRelayFormat_UnsupportedModeKeepsEmpty(t *testing.T) {
-	ruleName := uniqueChannelAffinityUsageCacheTestID("rule")
+	ruleName := fmt.Sprintf("rule_%d", time.Now().UnixNano())
 	usingGroup := "default"
-	keyFP := uniqueChannelAffinityUsageCacheTestID("fp")
+	keyFP := fmt.Sprintf("fp_%d", time.Now().UnixNano())
 	ctx := buildChannelAffinityStatsContextForTest(ruleName, usingGroup, keyFP)
 
 	usage := &dto.Usage{

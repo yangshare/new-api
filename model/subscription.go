@@ -600,6 +600,12 @@ func CompleteSubscriptionOrder(tradeNo string, providerPayload string, expectedP
 		if !plan.Enabled {
 			// still allow completion for already purchased orders
 		}
+		// 锁定用户行：并发完成同一用户的不同订单（包括多实例部署下）时，
+		// 使 CreateUserSubscriptionFromPlanTx 的 MaxPurchasePerUser 检查按用户串行。
+		var userRow User
+		if err := lockForUpdate(tx).Select("id").Where("id = ?", order.UserId).First(&userRow).Error; err != nil {
+			return err
+		}
 		subscription, err := CreateUserSubscriptionFromPlanTx(tx, order.UserId, plan, "order")
 		if err != nil {
 			return err
@@ -712,6 +718,11 @@ func AdminBindSubscription(userId int, planId int, sourceNote string) (string, e
 	}
 	groupChanged := false
 	err = DB.Transaction(func(tx *gorm.DB) error {
+		// 与 CompleteSubscriptionOrder 一致：先锁用户行，再做购买次数检查。
+		var userRow User
+		if err := lockForUpdate(tx).Select("id").Where("id = ?", userId).First(&userRow).Error; err != nil {
+			return err
+		}
 		subscription, err := CreateUserSubscriptionFromPlanTx(tx, userId, plan, "admin")
 		if err == nil {
 			groupChanged = subscription.PrevUserGroup != ""
@@ -737,9 +748,8 @@ func calcSubscriptionBalanceQuota(priceAmount float64) (int, error) {
 	}
 	quota := decimal.NewFromFloat(priceAmount).
 		Mul(decimal.NewFromFloat(common.QuotaPerUnit)).
-		Ceil().
-		IntPart()
-	return int(quota), nil
+		Ceil()
+	return common.WalletQuotaFromDecimalStrict(quota)
 }
 
 // PurchaseSubscriptionWithBalance creates a subscription by deducting the user's wallet quota.
@@ -1076,78 +1086,6 @@ func adminResetPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int6
 		}
 	}
 	return buildSubscriptionResetResult(plan, subs, advanceResetTime), nil
-}
-
-// SubscriptionPlanSyncResult reports the outcome of syncing plan changes to
-// existing active subscriptions. Mirrors SubscriptionResetResult shape for UI.
-type SubscriptionPlanSyncResult struct {
-	PlanId          int    `json:"plan_id"`
-	MatchedCount    int    `json:"matched_count"`
-	SyncedCount     int    `json:"synced_count"`
-	UserCount       int    `json:"user_count"`
-	PlanTitle       string `json:"-"`
-	AffectedUserIds []int  `json:"-"`
-}
-
-// syncPlanSubscriptionsTx applies plan-level changes (total amount + reset
-// period) to every active subscription under the plan within the caller's
-// transaction. Used when an admin edits a plan and opts to sync existing
-// subscribers. amount_used is preserved; it is only clamped down to the new
-// total when the new total is smaller than what was already consumed, so a
-// sync never produces a credit or overflow. The reset schedule begins at the
-// synchronization time, preventing a new, shorter period from immediately
-// resetting an existing subscriber's used quota.
-func SyncPlanSubscriptionsTx(tx *gorm.DB, plan *SubscriptionPlan, now int64) (*SubscriptionPlanSyncResult, error) {
-	if tx == nil || plan == nil {
-		return nil, errors.New("invalid sync args")
-	}
-	var subs []UserSubscription
-	if err := lockForUpdate(tx).
-		Where("plan_id = ? AND status = ? AND end_time > ?", plan.Id, "active", now).
-		Order("user_id asc, end_time asc, id asc").
-		Find(&subs).Error; err != nil {
-		return nil, err
-	}
-	for i := range subs {
-		sub := &subs[i]
-		sub.AmountTotal = plan.TotalAmount
-		// Clamp used to the new total when it shrank below consumed amount.
-		// A zero total means unlimited and never clamps.
-		if sub.AmountTotal > 0 && sub.AmountUsed > sub.AmountTotal {
-			sub.AmountUsed = sub.AmountTotal
-		}
-		// Start the new reset schedule at sync time. Using an older reset time
-		// could leave the computed deadline in the past and immediately clear
-		// amount_used in the reset task.
-		nextReset := calcNextResetTime(time.Unix(now, 0), plan, sub.EndTime)
-		sub.NextResetTime = nextReset
-		if nextReset > 0 {
-			sub.LastResetTime = now
-		} else {
-			sub.LastResetTime = 0
-		}
-		if err := tx.Save(sub).Error; err != nil {
-			return nil, err
-		}
-	}
-	// Deduplicate affected user ids for downstream audit/cache invalidation.
-	userIds := make([]int, 0, len(subs))
-	seenUsers := make(map[int]struct{}, len(subs))
-	for _, sub := range subs {
-		if _, ok := seenUsers[sub.UserId]; ok {
-			continue
-		}
-		seenUsers[sub.UserId] = struct{}{}
-		userIds = append(userIds, sub.UserId)
-	}
-	return &SubscriptionPlanSyncResult{
-		PlanId:          plan.Id,
-		MatchedCount:    len(subs),
-		SyncedCount:     len(subs),
-		UserCount:       len(userIds),
-		PlanTitle:       plan.Title,
-		AffectedUserIds: userIds,
-	}, nil
 }
 
 func AdminResetUserSubscriptionsByPlan(userId int, planId int, advanceResetTime bool) (*SubscriptionResetResult, error) {
