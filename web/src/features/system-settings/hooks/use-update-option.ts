@@ -21,7 +21,7 @@ import i18next from 'i18next'
 import { toast } from 'sonner'
 
 import { updateSystemOption } from '../api'
-import type { UpdateOptionMutationRequest } from '../types'
+import type { UpdateOptionRequest } from '../types'
 
 // Configuration keys that require status refresh
 const STATUS_RELATED_KEYS = new Set([
@@ -43,11 +43,7 @@ export function useUpdateOption() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (request: UpdateOptionMutationRequest) => {
-      const { silent, ...optionRequest } = request
-      void silent
-      return updateSystemOption(optionRequest)
-    },
+    mutationFn: (request: UpdateOptionRequest) => updateSystemOption(request),
     onSuccess: (data, variables) => {
       if (data.success) {
         // Always refresh system-options
@@ -63,9 +59,7 @@ export function useUpdateOption() {
           }
         }
 
-        if (!variables.silent) {
-          toast.success(i18next.t('Setting updated successfully'))
-        }
+        toast.success(i18next.t('Setting updated successfully'))
       } else {
         toast.error(data.message || i18next.t('Failed to update setting'))
       }

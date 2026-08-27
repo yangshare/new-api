@@ -34,11 +34,6 @@ export type UpdateOptionRequest = {
   value: string | boolean | number
 }
 
-export type UpdateOptionMutationRequest = UpdateOptionRequest & {
-  /** 当为 true 时，不弹出成功提示（用于批量更新场景） */
-  silent?: boolean
-}
-
 export type UpdateOptionResponse = {
   success: boolean
   message: string

@@ -33,11 +33,11 @@
 3. `go test ./model/ -run Subscription`（订阅链路）
 4. web 目录：`bun install`（上游可能新增依赖）→ `bun run typecheck` → `bun run build`
 5. `bun run format:check`（**只读**；禁止 `format --write`）。若失败：只对手工修复受影响行，不允许全局写回。
-6. 保护文件核对（两条都应输出空 diff）：
+6. 保护文件核对：
    ```powershell
    git diff dev-backup-pre-sync -- CLAUDE.md web/src/styles/theme.css
    ```
-   注意 CLAUDE.md 在本轮以后若进入双方都改集合，重放项 B6 生效后此 diff 只允许等于 B6 内容。
+   CLAUDE.md 在本轮以后若进入双方都改集合，重放项 B6 生效后此 diff 只允许等于 B6 内容。theme.css 已于 2026-08-27 退役黑白灰预设并取上游版——该文件相对备份的 diff 应等于「备份当时的本地改造取反」，不再要求为空；更直接的校验是 `git diff upstream/main -- web/src/styles/theme.css` 必须为空。
 
 ## 漂移检测脚本（第 5 步直接粘贴运行）
 
@@ -49,7 +49,6 @@ $both         = @(git diff --name-only "$mb..$backup" | Where-Object { (git diff
 # 1) 重放过但不含任何 B 项的覆盖文件：最终态必须与 upstream/main 完全一致
 #    （含 B 项的文件在下面 $replayFiles 里列出，豁免该断言）
 $replayFiles = @(
-  'setting/ratio_setting/model_ratio.go'
   'model/subscription.go'
   'service/channel_affinity_usage_cache_test.go'
   '.github/workflows/electron-build.yml'; '.github/workflows/release.yml'; '.gitignore'; 'Dockerfile'
@@ -63,10 +62,8 @@ $replayFiles = @(
   'web/src/features/profile/components/tabs/account-bindings-tab.tsx'
   'web/src/features/system-settings/auth/oauth-section.tsx'
   'web/src/features/system-settings/billing/section-registry.tsx'
-  'web/src/features/system-settings/hooks/use-update-option.ts'
   'web/src/features/system-settings/models/ratio-settings-card.tsx'
   'web/src/features/system-settings/models/routing-reliability-section.tsx'
-  'web/src/features/system-settings/types.ts'
   'web/src/features/usage-logs/components/dialogs/details-dialog.tsx'
   'web/src/features/usage-logs/lib/format.ts'
   'web/src/features/users/components/dialogs/user-binding-dialog.tsx'
@@ -95,41 +92,32 @@ foreach ($f in $oursOnly) {
 
 | 组 | 内容 |
 |---|---|
-| relay 适配 | `relay/channel/ai360/`（360AI 渠道适配 + 敏感数据遮蔽，注意上游历史里也有同名目录，属共享基底，本地在其上叠了一个 feature commit） |
+| relay 适配 | `relay/channel/ai360/`（360AI 渠道适配 + 敏感数据遮蔽，注意上游历史里也有同名目录，属共享基底，本地在其上叠了一个 feature commit）；含 `constants_test.go` 模型列表回归 |
 | 订阅特性后端 | `model/subscription_sync_test.go`；`controller/subscription.go` 内 SyncPlanSubscriptionsTx 调用面（文件本体上游也有，本地对其增量当前未被上游触碰） |
-| silent-batch 前端库 | `web/src/features/system-settings/lib/update-option-results.ts` |
 | multikey 日志前端 | `web/src/features/usage-logs/lib/format-multikey.test.ts`；`web/src/features/usage-logs/components/columns/common-logs-columns.tsx` 内多键列显示（上游本次未碰；若未来上游改它，此项升级进 B 类） |
-| 前端工程配置 | `web/.oxlintrc.json`、`web/rsbuild.config.ts` 改动、`web/index.html` 防闪烁脚本、`web/scripts/` i18n/format 脚本 |
-| 样式 | `web/src/styles/theme.css` 黑白灰预设改造（另有 theme-presets.css 等） |
+| 价格表草稿徽标 | `web/src/features/system-settings/models/model-ratio-table-columns.tsx` 本地渲染（详见 B12；数据结构来自上游原生 model-pricing-snapshots） |
+| 前端工程配置 | `web/.oxlintrc.json`、`web/rsbuild.config.ts` 改动、`web/scripts/` i18n/format 脚本 |
 | 工具脚本 | `scripts/start-dev.ps1`、`scripts/release.bat`、`scripts/sync-script-tests.ps1`、`scripts/README.md` |
-| 测试 | `service/codex_wham_usage_test.go`；`web/src/components/ui/dialog-content-width.test.ts`（DialogContent 宽度约定扫描）；`web/src/features/system-settings/lib/update-option-results.test.ts`（silent-batch 判定回归）；均已随上游 vitest 化（2026-08-27） |
+| 测试 | `service/codex_wham_usage_test.go`；`web/src/components/ui/dialog-content-width.test.ts`（DialogContent 宽度约定扫描）；随上游 vitest 化（2026-08-27） |
 | 文档 | `docs/superpowers/**`、`docs/upstream-sync.md` 本手册 |
+
+> 历史行记录：silent-batch 前端库（update-option-results）、theme.css 黑白灰预设、index.html 防闪烁脚本已于 2026-08-27 随 B4/B5 退役从本表移除。
 
 ## B 类：上游文件内的本地修改（覆盖后必须重放）
 
 > 每项四要素：文件 / 内容 / grep 锚点 / 注意事项。「提取命令」可在任意轮次零漂移找回原始内容：`git show dev-backup-pre-sync:<path>`。
 
-### B1 `setting/ratio_setting/model_ratio.go` — 本地价格条目
+### B1 `setting/ratio_setting/model_ratio.go` — 【已退役 2026-08-27】
 
-锚点（存在性校验）：`360GPT_S2_V9`（360 组首条目）。
+本地自建价格条目（babbage-002/davinci-002/babbage/ada + 8 个 360 系），上游从未拥有。2026-08-27 起主动放弃：整文件取上游。守护测试 `setting/ratio_setting/model_ratio_test.go` 一并删除；360 渠道自身的模型列表回归仍在 A 类 `relay/channel/ai360/constants_test.go`。反向断言见锚点索引。
 
-三段插入，紧跟既有相邻行：
-- `"gpt-3.5-turbo-0125": 0.25,` 之后插 `"babbage-002": 0.2,` 与 `"davinci-002": 1,`
-- `"curie": 10,` 之后插 `"babbage": 10,` 与 `"ada": 10,`
-- `"SparkDesk-v4.0": 1.2858,` 之后插 8 个 360 系条目：
+### B4 silent-batch 批量保存特性 — 【已退役 2026-08-27】
 
-```go
-	"360GPT_S2_V9":                              0.8572,
-	"360gpt-turbo":                              0.0858,
-	"360gpt-turbo-responsibility-8k":            0.8572,
-	"360gpt-pro":                                0.8572,
-	"360gpt2-pro":                               0.8572,
-	"embedding-bert-512-v1":                     0.0715,
-	"embedding_s1_v1":                           0.0715,
-	"semantic_similarity_s1_v1":                 0.0715,
-```
-
-注意事项：map 字面量缩进为 tab、key 对齐以 `gofmt -w` 收尾为准。
+主动放弃，调用面全部还原为上游形态：
+- `types.ts`、`use-update-option.ts` 整文件取上游；
+- `lib/update-option-results.ts(+test)` 删除（孤儿）；
+- `ratio-settings-card.tsx` 两处 handler、`model-mutate-drawer.tsx` updates 循环还原上游写法（这两个文件仍保留 C1 剔除 / B10 注释，故继续留在 `$replayFiles`）。
+代价说明：模型价格/分组/模型编辑多键保存会恢复上游"每键一次成功 toast"，中途失败不再自动失效缓存。原语义可随时从本节历史或 `dev-backup-pre-sync` 找回。
 
 ### B2 `web/src/features/usage-logs/lib/format.ts` — getMultiKeyIndex
 
@@ -239,9 +227,9 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 
 4. `web/src/features/models/components/drawers/model-mutate-drawer.tsx`：updates 循环改成 break-on-fail + 失败时 invalidate（详见计划任务 6）。
 
-### B5 `web/src/styles/theme.css` — 黑白灰默认预设
+### B5 `web/src/styles/theme.css` — 黑白灰默认预设 — 【已退役 2026-08-27】
 
-锚点：`oklch(0.13 0 0)`。另涉 theme-presets.css 与 `web/index.html` 防闪烁 fallback。**上游至今未动这三个文件**，正常轮次零操作；一旦它们出现在某轮 `$both` 集合，从 `dev-backup-pre-sync` 提取整文件差量重放。
+主动放弃：`theme.css` 与 `web/index.html`（防闪烁脚本）整文件取上游；`theme-presets.css` 本就与上游一致，零操作。站点恢复上游默认配色与明暗切换行为。反向断言见锚点索引。
 
 ### B6 `CLAUDE.md` — 项目规则段
 
@@ -290,6 +278,10 @@ func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
 | `web/src/features/users/components/dialogs/user-binding-dialog.tsx` | `setShowBoundOnly(true)` ← set-state-in-effect 注释 |
 | `web/src/features/wallet/hooks/use-billing-history.ts` | `fetchBillingHistory()` ← set-state-in-effect 注释 |
 | `web/src/features/models/components/drawers/model-mutate-drawer.tsx` | `setOldModelName(model.model_name)` ← set-state-in-effect 注释 |
+| `web/src/features/system-settings/models/claude-settings-card.tsx` | `<SettingsPageFormActions` 内 `onSave={...}` 上方 ← `{/* eslint-disable-next-line react-hooks/refs */}`（JSX 注释版） |
+| `web/src/features/system-settings/models/tiered-pricing-editor.tsx` | 两处：`setDraft(formatNumberDraft(value))` 与 `if (hasMediaPricing) setMediaOpen(true)` ← set-state-in-effect 注释 |
+| `web/src/features/system-settings/models/upstream-ratio-sync.tsx` | `setChannelEndpoints((prev) => {` ← set-state-in-effect 注释 |
+| `web/src/features/system-settings/models/conflict-confirm-dialog.tsx` | 对话框宽度：`className='max-w-4xl'` → `'w-[calc(100vw-2rem)] !max-w-4xl'`（样式修正，非 lint） |
 | `web/src/features/system-settings/models/routing-reliability-section.tsx` | 见下方独立片段（基线序列化同步） |
 
 routing-reliability-section 本地改进（防止 defaultValues 外部刷新后 baseline 过期）：
@@ -317,37 +309,40 @@ routing-reliability-section 本地改进（防止 defaultValues 外部刷新后 
 4. React import 需要 `useEffect`（缺则补）。
 另有一处**有意放弃**：user-binding-dialog 中原 diff 还包含两个空行分隔，纯排版噪声，不重放。
 
+### B12 `model-ratio-table-columns.tsx` — 价格表草稿徽标（2026-08-27 补录）
+
+锚点：`isDraftChanged`、`Will be removed`。本地在 `buildModelRatioColumns` 的 name 列与价格明细列各渲染一个 Draft 徽标块（约 +30 行），数据来自上游原生 `model-pricing-snapshots.ts` 行结构（isDraftChanged/isDraftDeleted/draft 字段由 `model-ratio-visual-editor.tsx` 填充，均上游代码）。i18n 依赖 B11 键 2/3。某轮覆盖后重放：从 `dev-backup-pre-sync` 提取该文件 diff，两段徽标 JSX 按上游结构回插即可。
+
+> 补录说明：此前手册漏登本项；2026-08-27 与上游比对全量差异时发现并归档。同步发现 `model-ratio-form.tsx` 约 151 行差异实为 C1 的管线移除（variant/unset 全套），已并入 C1 记录，非独立特性。
+
 ### B11 i18n 六键七语
 
-锚点：`Updated; synced {{count}} active subscriptions`（en/zh 等 7 个 locale 文件 `.translation` 下各应有 6 个本地键）。键全集（en 原文）：
+锚点：`Updated; synced {{count}} active subscriptions`（en/zh 等 7 个 locale 文件 `.translation` 下各应有 5 个本地键）。键全集（en 原文）：
 1. `Apply changes to existing subscriptions`
-2. `Pricing changes saved to draft. Click "Save model prices" to apply.`
-3. `Draft`
-4. `Will be removed`
-5. `Sync the new quota and reset period to active subscribers. Used quota is kept.`
-6. `Updated; synced {{count}} active subscriptions`
+2. `Draft`
+3. `Will be removed`
+4. `Sync the new quota and reset period to active subscribers. Used quota is kept.`
+5. `Updated; synced {{count}} active subscriptions`
 
-七语译文以 `dev-backup-pre-sync` 分支的 locale 文件为源，注入脚本见计划任务 9（比较 backup 与当前文件、按字母序插回、保持 2 空格缩进与结尾换行）。键 1/5/6 服务于 B8；键 2/3/4 服务于 ratio 表单草稿交互；任何人新增 UI 文案时，对应键值必须当次补录（开发习惯条款）。
+七语译文以 `dev-backup-pre-sync` 分支的 locale 文件为源，注入脚本见计划任务 9（比较 backup 与当前文件、按字母序插回、保持 2 空格缩进与结尾换行）。键 1/4/5 服务于 B8；键 2/3 服务于 B12 草稿徽标；任何人新增 UI 文案时，对应键值必须当次补录（开发习惯条款）。
+删除记录：原键 2 `Pricing changes saved to draft. Click "Save model prices" to apply.` 已于 2026-08-27 从七语全部移除（死键，无源码引用）。**locale 删键纪律**：sync-i18n 以"最富语言"自动选 base，只删单一语言会被反向回填——必须七个文件同时删净后再跑 `i18n:sync`，随后 grep 校验混淆品牌行未变。
 
 ## C 类：主动放弃的上游特性（每轮合并重新决策，防静默带回）
 
 | # | 特性 | 放弃原因 | 涉及文件与本轮剔除动作 |
 |---|---|---|---|
-| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口 | 取上游版后在 `web/src/features/system-settings/billing/section-registry.tsx` 检查 Model Pricing 与分组卡两处 `visibleTabs` 数组（约 114/127 行）不含 `'unset-models'`；在 `web/src/features/system-settings/models/ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支（连同 `variant=` 属性行）删去 unset-models 相关成员。具体代码见手册随附计划任务 6 |
+| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口（2026-08-27 注：silent-batch 虽已退役，本剔除维持不变） | 取上游版后在 `web/src/features/system-settings/billing/section-registry.tsx` 检查 Model Pricing 与分组卡两处 `visibleTabs` 数组（约 114/127 行）不含 `'unset-models'`；在 `web/src/features/system-settings/models/ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支删去 unset-models 相关成员；在 `web/src/features/system-settings/models/model-ratio-form.tsx` 移除整套 `variant?: 'default' | 'unset'` 管线（props、isUnsetVariant 分支、enabled-models 查询与报错 toast、对应 UI 块，约 151 行）。具体代码见手册随附计划任务 6 |
 | C2 | superpowers-zh 框架段（CLAUDE.md） | 2026-07-14 主动删除 | 若任何来源试图恢复 CLAUDE.md 该段落，拒绝并维持删除状态 |
 
 ## 锚点速查索引（第 4 步机械校验用；PowerShell 直接粘贴）
 
 ```powershell
 $pairs = @(
-  @('setting/ratio_setting/model_ratio.go','360GPT_S2_V9')
   @('web/src/features/usage-logs/lib/format.ts','getMultiKeyIndex')
   @('web/src/features/usage-logs/lib/format-multikey.test.ts','getMultiKeyIndex')
   @('web/src/features/usage-logs/components/dialogs/details-dialog.tsx','multiKeyLabel')
-  @('web/src/features/system-settings/types.ts','UpdateOptionMutationRequest')
-  @('web/src/features/system-settings/hooks/use-update-option.ts','silent')
-  @('web/src/features/system-settings/lib/update-option-results.ts','didAllOptionUpdatesSucceed')
-  @('web/src/styles/theme.css','oklch(0.13 0 0)')
+  @('web/src/features/system-settings/models/model-ratio-table-columns.tsx','isDraftChanged')
+  @('web/src/styles/theme-presets.css','data-theme-preset')
   @('CLAUDE.md','Rule 9')
   @('.github/workflows/release.yml','dockeronly')
   @('.github/workflows/electron-build.yml','dockeronly')
@@ -367,10 +362,43 @@ foreach ($p in $pairs) {
 }
 ```
 
-反向断言（C 类确已缺席，二者都应 FAIL=True）：
-`Select-String -Path web/src/features/system-settings/models/ratio-settings-card.tsx -Pattern 'unset-models' -SimpleMatch` 无命中；
-`Select-String -Path web/src/features/system-settings/billing/section-registry.tsx -Pattern 'unset-models' -SimpleMatch` 无命中（visibleTabs 入口所在，勿再按旧路径 section-registry.tsx 找）；
-`Select-String -Path CLAUDE.md -Pattern 'superpowers-zh' -SimpleMatch` 无命中。
+反向断言（C 类与已退役项确已缺席，全部应无命中；文件不存在时 Test-Path 返回 False 即 PASS）：
+
+```powershell
+$absent = @(
+  @('web/src/features/system-settings/models/ratio-settings-card.tsx','unset-models')
+  @('web/src/features/system-settings/billing/section-registry.tsx','unset-models')
+  @('CLAUDE.md','superpowers-zh')
+  @('setting/ratio_setting/model_ratio.go','360GPT_S2_V9')
+  @('setting/ratio_setting/model_ratio.go','babbage-002')
+  @('web/src/features/system-settings/types.ts','UpdateOptionMutationRequest')
+  @('web/src/features/system-settings/hooks/use-update-option.ts','silent')
+  @('web/src/styles/theme.css','oklch(0.13 0 0)')
+  @('web/index.html','data-theme-preset')
+)
+foreach ($a in $absent) {
+  if (-not (Test-Path $a[0])) { "PASS (file absent) $($a[0])"; continue }
+  $hit = (Select-String -Path $a[0] -Pattern $a[1] -SimpleMatch | Measure-Object).Count
+  if ($hit -eq 0) { "PASS (absent) $($a[0]) <- $($a[1])" } else { "FAIL 不应存在 $($a[0]) <- $($a[1])" }
+}
+# 已删除文件断言
+foreach ($f in 'web/src/features/system-settings/lib/update-option-results.ts',
+               'web/src/features/system-settings/lib/update-option-results.test.ts',
+               'setting/ratio_setting/model_ratio_test.go') {
+  if (Test-Path $f) { "FAIL 已退役文件又出现`t$f" } else { "PASS (deleted) $f" }
+}
+# 已退役取上游文件：与 upstream/main 必须零差异
+foreach ($f in 'setting/ratio_setting/model_ratio.go',
+               'web/src/features/system-settings/types.ts',
+               'web/src/features/system-settings/hooks/use-update-option.ts',
+               'web/src/styles/theme.css',
+               'web/index.html') {
+  $d = git diff --name-only upstream/main -- $f
+  if ($d) { "FAIL 应等于上游`t$f" } else { "PASS (=upstream) $f" }
+}
+```
+
+> 锚点索引变更记录（2026-08-27）：随 B1/B4/B5 退役移除 model_ratio/theme.css/types/use-update-option/update-option-results 五组正向锚点；新增 B12 草稿徽标锚点 `isDraftChanged` 与上述退役反向断言。`theme-presets.css` 的 data-theme-preset 为上游自带预设机制，保留正向校验。
 
 ## 手册维护纪律
 
@@ -384,3 +412,4 @@ foreach ($p in $pairs) {
 |---|---|---|---|
 | 2026-08-26 | bc14c18f6024e79cba1c08d02cd007796e12d668 | 83 commits | 手册首轮实战；封面考古结论：嵌套计费属共享基底；B 清单定稿 B1-B11 |
 | 2026-08-27 | bc14c18f（同轮收尾，未 push） | 0（83 已全部并入） | 门槛收尾：format:check 5 个上游带入文件按 oxfmt 归一（剥保护头流程）；三个本地 node:test 测试迁 vitest（dialog-content-width / update-option-results / format-multikey）；漂移脚本第 2 段 PS 判定勘误（见脚本下方注记） |
+| 2026-08-27 | —（非同步轮·退役专项） | — | 退役 B1/B4/B5：相关文件取上游或还原调用面，删 model_ratio_test.go 与孤儿 update-option-results(+test)；B11 键2 七语清理，实测发现 sync-i18n「最富语言选 base」对删键不友好——必须七语同时删净再跑 sync（纪律已写入 B11）；借机全量比对上游归档手册外差异：C1 补录 model-ratio-form 管线移除、B10 补列 4 文件、新增 B12 草稿徽标 |

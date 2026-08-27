@@ -31,7 +31,6 @@ import { resetModelRatios } from '../api'
 import { SettingsPageTitleStatusPortal } from '../components/settings-page-context'
 import { SettingsSection } from '../components/settings-section'
 import { useUpdateOption } from '../hooks/use-update-option'
-import { didAllOptionUpdatesSucceed } from '../lib/update-option-results'
 import { positiveIntegerSchema } from '../utils/numeric-field'
 import { GroupRatioForm } from './group-ratio-form'
 import { ModelRatioForm } from './model-ratio-form'
@@ -341,18 +340,9 @@ export function RatioSettingsCard({
         return
       }
 
-      const results = []
       for (const key of updates) {
-        const result = await updateOption.mutateAsync({
-          key: apiKeyMap[key as string] || (key as string),
-          value: normalized[key],
-          silent: true,
-        })
-        results.push(result)
-        if (!result.success) return
-      }
-      if (results.length > 0 && didAllOptionUpdatesSucceed(results)) {
-        toast.success(t('Setting updated successfully'))
+        const apiKey = apiKeyMap[key as string] || (key as string)
+        await updateOption.mutateAsync({ key: apiKey, value: normalized[key] })
       }
 
       modelNormalizedDefaults.current = normalized
@@ -388,23 +378,14 @@ export function RatioSettingsCard({
         (key) => normalized[key] !== groupNormalizedDefaults.current[key]
       )
 
-      const results = []
       for (const key of updates) {
-        const result = await updateOption.mutateAsync({
-          key: apiKeyMap[key] || key,
-          value: normalized[key],
-          silent: true,
-        })
-        results.push(result)
-        if (!result.success) return
-      }
-      if (results.length > 0 && didAllOptionUpdatesSucceed(results)) {
-        toast.success(t('Setting updated successfully'))
+        const apiKey = apiKeyMap[key] || key
+        await updateOption.mutateAsync({ key: apiKey, value: normalized[key] })
       }
 
       groupNormalizedDefaults.current = normalized
     },
-    [t, updateOption]
+    [updateOption]
   )
 
   const handleResetRatios = useCallback(() => {

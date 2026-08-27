@@ -20,45 +20,6 @@
   </head>
 
   <body>
-    <!-- 防首屏主题闪烁：在 React 挂载前按 cookie 预设 body 主题属性。
-         真相源仍以 src/lib/theme-customization.ts 为准，此处为同步副本；
-         修改默认预设/预设列表/字体映射时需一并更新：
-           - fallback 'anthropic'  ↔ DEFAULT_THEME_CUSTOMIZATION.preset
-           - ALLOWED_PRESETS       ↔ THEME_PRESETS 的 value
-           - font resolve          ↔ PRESET_DEFAULT_FONT / resolveThemeFont -->
-    <script>
-      ;(function () {
-        function readCookie(name) {
-          var m = document.cookie.match(
-            '(?:^|; )' +
-              name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') +
-              '=([^;]*)'
-          )
-          return m ? decodeURIComponent(m[1]) : ''
-        }
-        var ALLOWED_PRESETS = [
-          'default',
-          'anthropic',
-          'simple-large',
-          'underground',
-          'rose-garden',
-          'lake-view',
-          'sunset-glow',
-          'forest-whisper',
-          'ocean-breeze',
-          'lavender-dream',
-        ]
-        var preset = readCookie('theme_preset')
-        if (ALLOWED_PRESETS.indexOf(preset) === -1) preset = 'anthropic'
-        document.body.setAttribute('data-theme-preset', preset)
-
-        var font = readCookie('theme_font')
-        if (font !== 'sans' && font !== 'serif') {
-          font = preset === 'anthropic' ? 'serif' : 'sans'
-        }
-        document.body.setAttribute('data-theme-font', font)
-      })()
-    </script>
     <div id="root" translate="no" class="notranslate"></div>
   </body>
 </html>

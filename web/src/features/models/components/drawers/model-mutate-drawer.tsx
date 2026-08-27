@@ -77,7 +77,6 @@ import {
   getOptionValue,
 } from '@/features/system-settings/hooks/use-system-options'
 import { useUpdateOption } from '@/features/system-settings/hooks/use-update-option'
-import { didAllOptionUpdatesSucceed } from '@/features/system-settings/lib/update-option-results'
 import { normalizeJsonString } from '@/features/system-settings/models/utils'
 import type { ModelSettings } from '@/features/system-settings/types'
 import { safeJsonParse } from '@/features/system-settings/utils/json-parser'
@@ -685,22 +684,8 @@ export function ModelMutateDrawer({
             }
 
             // Apply all updates (including deletions when clearing fields)
-            const results = []
             for (const update of updates) {
-              const result = await updateOption.mutateAsync({
-                ...update,
-                silent: true,
-              })
-              results.push(result)
-              if (!result.success) break
-            }
-
-            if (results.length > 0 && !didAllOptionUpdatesSucceed(results)) {
-              queryClient.invalidateQueries({
-                queryKey: modelsQueryKeys.lists(),
-              })
-              queryClient.invalidateQueries({ queryKey: ['system-options'] })
-              return
+              await updateOption.mutateAsync(update)
             }
           }
 
