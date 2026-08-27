@@ -333,7 +333,7 @@ routing-reliability-section 本地改进（防止 defaultValues 外部刷新后 
 
 | # | 特性 | 放弃原因 | 涉及文件与本轮剔除动作 |
 |---|---|---|---|
-| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口 | 取上游版后在 `section-registry.tsx` 把 Model Pricing 的 visibleTabs 数组删去 `'unset-models'`；在 `ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支（连同 `variant=` 属性行）删去 unset-models 相关成员。具体代码见手册随附计划任务 6 |
+| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口 | 取上游版后在 `web/src/features/system-settings/billing/section-registry.tsx` 检查 Model Pricing 与分组卡两处 `visibleTabs` 数组（约 114/127 行）不含 `'unset-models'`；在 `web/src/features/system-settings/models/ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支（连同 `variant=` 属性行）删去 unset-models 相关成员。具体代码见手册随附计划任务 6 |
 | C2 | superpowers-zh 框架段（CLAUDE.md） | 2026-07-14 主动删除 | 若任何来源试图恢复 CLAUDE.md 该段落，拒绝并维持删除状态 |
 
 ## 锚点速查索引（第 4 步机械校验用；PowerShell 直接粘贴）
@@ -369,6 +369,7 @@ foreach ($p in $pairs) {
 
 反向断言（C 类确已缺席，二者都应 FAIL=True）：
 `Select-String -Path web/src/features/system-settings/models/ratio-settings-card.tsx -Pattern 'unset-models' -SimpleMatch` 无命中；
+`Select-String -Path web/src/features/system-settings/billing/section-registry.tsx -Pattern 'unset-models' -SimpleMatch` 无命中（visibleTabs 入口所在，勿再按旧路径 section-registry.tsx 找）；
 `Select-String -Path CLAUDE.md -Pattern 'superpowers-zh' -SimpleMatch` 无命中。
 
 ## 手册维护纪律
