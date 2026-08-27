@@ -16,11 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import assert from 'node:assert/strict'
-import { describe, test } from 'node:test'
+import { describe, expect, test } from 'vitest'
 
-import { getMultiKeyIndex } from './format'
 import type { LogOtherData } from '../types'
+import { getMultiKeyIndex } from './format'
 
 describe('getMultiKeyIndex', () => {
   test('returns zero index for multi-key logs', () => {
@@ -31,7 +30,7 @@ describe('getMultiKeyIndex', () => {
       },
     }
 
-    assert.equal(getMultiKeyIndex(other), 0)
+    expect(getMultiKeyIndex(other)).toBe(0)
   })
 
   test('returns positive index for multi-key logs', () => {
@@ -42,7 +41,7 @@ describe('getMultiKeyIndex', () => {
       },
     }
 
-    assert.equal(getMultiKeyIndex(other), 3)
+    expect(getMultiKeyIndex(other)).toBe(3)
   })
 
   test('hides index when log is not marked as multi-key', () => {
@@ -53,49 +52,45 @@ describe('getMultiKeyIndex', () => {
       },
     }
 
-    assert.equal(getMultiKeyIndex(other), null)
+    expect(getMultiKeyIndex(other)).toBe(null)
   })
 
   test('hides missing, non-numeric, and non-finite indexes', () => {
-    assert.equal(getMultiKeyIndex(null), null)
-    assert.equal(getMultiKeyIndex({}), null)
-    assert.equal(
+    expect(getMultiKeyIndex(null)).toBe(null)
+    expect(getMultiKeyIndex({})).toBe(null)
+    expect(
       getMultiKeyIndex({
         admin_info: {
           is_multi_key: true,
         },
-      }),
-      null
-    )
-    assert.equal(
+      })
+    ).toBe(null)
+    expect(
       getMultiKeyIndex({
         admin_info: {
           is_multi_key: true,
           multi_key_index: Number.NaN,
         },
-      }),
-      null
-    )
+      })
+    ).toBe(null)
   })
 
   test('hides negative and fractional indexes', () => {
-    assert.equal(
+    expect(
       getMultiKeyIndex({
         admin_info: {
           is_multi_key: true,
           multi_key_index: -1,
         },
-      }),
-      null
-    )
-    assert.equal(
+      })
+    ).toBe(null)
+    expect(
       getMultiKeyIndex({
         admin_info: {
           is_multi_key: true,
           multi_key_index: 1.5,
         },
-      }),
-      null
-    )
+      })
+    ).toBe(null)
   })
 })

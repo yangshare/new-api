@@ -16,10 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import assert from 'node:assert/strict'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { describe, test } from 'node:test'
+
+import { describe, expect, test } from 'vitest'
 
 const sourceRoot = join(process.cwd(), 'src')
 
@@ -113,6 +113,6 @@ describe('dialog content width overrides', () => {
       }
     }
 
-    assert.deepEqual(violations, [])
+    expect(violations).toEqual([])
   })
 })

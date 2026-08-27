@@ -16,26 +16,24 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import assert from 'node:assert/strict'
-import { describe, test } from 'node:test'
+import { describe, expect, test } from 'vitest'
+
 import { didAllOptionUpdatesSucceed } from './update-option-results'
 
 describe('didAllOptionUpdatesSucceed', () => {
   test('returns false when any option update reports failure', () => {
-    assert.equal(
+    expect(
       didAllOptionUpdatesSucceed([
         { success: true, message: '' },
         { success: false, message: 'failed' },
-      ]),
-      false
-    )
+      ])
+    ).toBe(false)
   })
 
   test('returns true only when at least one update succeeds and none fail', () => {
-    assert.equal(
-      didAllOptionUpdatesSucceed([{ success: true, message: '' }]),
+    expect(didAllOptionUpdatesSucceed([{ success: true, message: '' }])).toBe(
       true
     )
-    assert.equal(didAllOptionUpdatesSucceed([]), false)
+    expect(didAllOptionUpdatesSucceed([])).toBe(false)
   })
 })
