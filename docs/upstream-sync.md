@@ -81,10 +81,13 @@ foreach ($f in $both) {
 # 2) 本地单方修改的文件（上游未动）：备份以来不许有任何变化
 $oursOnly = @(git diff --name-only "$mb..$backup" | Where-Object { (git diff --name-only "$mb..upstream/main") -notcontains $_ })
 foreach ($f in $oursOnly) {
-  if (-not (git diff --quiet "$backup..dev" -- $f)) { "FAIL 仅本地文件被动了`t$f" }
+  $changedSinceBackup = git diff --name-only "$backup..dev" -- $f
+  if ($changedSinceBackup) { "FAIL 仅本地文件被动了`t$f" }
 }
 "漂移检测结束。没有 FAIL 行即通过。"
 ```
+
+> 勘误（2026-08-27）：第 2 段循环初稿为 `if (-not (git diff --quiet "$backup..dev" -- $f))`。PowerShell 中原生命令的退出码不进输出流，而 `--quiet` 成功时又无任何 stdout，该条件恒成立，导致所有仅本地文件被误报 FAIL。现用「`git diff --name-only` 输出非空」判定；在终端里验证退出码请写 `git diff --quiet ...; if ($LASTEXITCODE -ne 0) {...}`。
 
 ## A 类：本地独有文件（上游无对应文件，merge 天然保留）
 
@@ -379,3 +382,4 @@ foreach ($p in $pairs) {
 | 日期 | merge-base | upstream 领先 | 备注 |
 |---|---|---|---|
 | 2026-08-26 | bc14c18f6024e79cba1c08d02cd007796e12d668 | 83 commits | 手册首轮实战；封面考古结论：嵌套计费属共享基底；B 清单定稿 B1-B11 |
+| 2026-08-27 | bc14c18f（同轮收尾，未 push） | 0（83 已全部并入） | 门槛收尾：format:check 5 个上游带入文件按 oxfmt 归一（剥保护头流程）；三个本地 node:test 测试迁 vitest（dialog-content-width / update-option-results / format-multikey）；漂移脚本第 2 段 PS 判定勘误（见脚本下方注记） |
