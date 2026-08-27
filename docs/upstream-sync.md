@@ -102,7 +102,7 @@ foreach ($f in $oursOnly) {
 | 前端工程配置 | `web/.oxlintrc.json`、`web/rsbuild.config.ts` 改动、`web/index.html` 防闪烁脚本、`web/scripts/` i18n/format 脚本 |
 | 样式 | `web/src/styles/theme.css` 黑白灰预设改造（另有 theme-presets.css 等） |
 | 工具脚本 | `scripts/start-dev.ps1`、`scripts/release.bat`、`scripts/sync-script-tests.ps1`、`scripts/README.md` |
-| 测试 | `service/codex_wham_usage_test.go` |
+| 测试 | `service/codex_wham_usage_test.go`；`web/src/components/ui/dialog-content-width.test.ts`（DialogContent 宽度约定扫描）；`web/src/features/system-settings/lib/update-option-results.test.ts`（silent-batch 判定回归）；均已随上游 vitest 化（2026-08-27） |
 | 文档 | `docs/superpowers/**`、`docs/upstream-sync.md` 本手册 |
 
 ## B 类：上游文件内的本地修改（覆盖后必须重放）
