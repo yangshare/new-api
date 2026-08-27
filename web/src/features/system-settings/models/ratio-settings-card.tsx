@@ -139,11 +139,7 @@ const createGroupSchema = (t: Translate) =>
 
 type ModelFormValues = z.infer<ReturnType<typeof createModelSchema>>
 type GroupFormValues = z.infer<ReturnType<typeof createGroupSchema>>
-type RatioTabId =
-  | 'models'
-  | 'groups'
-  | 'tool-prices'
-  | 'upstream-sync'
+type RatioTabId = 'models' | 'groups' | 'tool-prices' | 'upstream-sync'
 
 type RatioSettingsCardProps = {
   modelDefaults: ModelFormValues
