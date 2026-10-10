@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { handleServerError } from '@/lib/handle-server-error'
 
 import { SettingsSwitchField } from '../components/settings-form-layout'
 import { SettingsSection } from '../components/settings-section'
@@ -105,7 +106,6 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFaqList(
           parsed.map((item, idx) => ({
             ...item,
@@ -119,7 +119,6 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
   }, [data])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 
@@ -131,8 +130,8 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
       })
       setIsEnabled(checked)
       toast.success(t('Setting saved'))
-    } catch {
-      toast.error(t('Failed to update setting'))
+    } catch (error) {
+      handleServerError(error, t('Failed to update setting'))
     }
   }
 
@@ -215,8 +214,8 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
       })
       setHasChanges(false)
       toast.success(t('FAQ saved successfully'))
-    } catch {
-      toast.error(t('Failed to save FAQ'))
+    } catch (error) {
+      handleServerError(error, t('Failed to save FAQ'))
     }
   }
 
@@ -326,7 +325,7 @@ export function FAQSection({ enabled, data }: FAQSectionProps) {
         onOpenChange={setShowDialog}
         title={editingFaq ? t('Edit FAQ') : t('Add FAQ')}
         description={t('Create or update frequently asked questions for users')}
-        contentClassName='sm:max-w-2xl'
+        contentClassName='max-w-2xl'
         contentHeight='auto'
         bodyClassName='space-y-4'
         footer={

@@ -16,8 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useQueryClient } from '@tanstack/react-query'
 /* eslint-disable react-refresh/only-export-components */
+import { useQueryClient } from '@tanstack/react-query'
 import React, {
   createContext,
   useContext,
@@ -41,6 +41,7 @@ type DialogType =
   | 'balance-query'
   | 'fetch-models'
   | 'ollama-models'
+  | 'inference-status'
   | 'multi-key-manage'
   | 'tag-batch-edit'
   | 'edit-tag'

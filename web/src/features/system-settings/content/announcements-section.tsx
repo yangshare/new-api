@@ -61,6 +61,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import dayjs from '@/lib/dayjs'
+import { handleServerError } from '@/lib/handle-server-error'
 
 import { SettingsSwitchField } from '../components/settings-form-layout'
 import { SettingsSection } from '../components/settings-section'
@@ -159,7 +160,6 @@ export function AnnouncementsSection({
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnnouncements(
           parsed.map((item, idx) => ({
             ...item,
@@ -173,7 +173,6 @@ export function AnnouncementsSection({
   }, [data])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 
@@ -185,8 +184,8 @@ export function AnnouncementsSection({
       })
       setIsEnabled(checked)
       toast.success(t('Setting saved'))
-    } catch {
-      toast.error(t('Failed to update setting'))
+    } catch (error) {
+      handleServerError(error, t('Failed to update setting'))
     }
   }
 
@@ -275,8 +274,8 @@ export function AnnouncementsSection({
       })
       setHasChanges(false)
       toast.success(t('Announcements saved successfully'))
-    } catch {
-      toast.error(t('Failed to save announcements'))
+    } catch (error) {
+      handleServerError(error, t('Failed to save announcements'))
     }
   }
 
@@ -447,7 +446,7 @@ export function AnnouncementsSection({
         description={t(
           'Create or update system announcements for the dashboard'
         )}
-        contentClassName='sm:max-w-2xl'
+        contentClassName='max-w-2xl'
         contentHeight='auto'
         bodyClassName='space-y-4'
         footer={

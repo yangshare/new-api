@@ -186,7 +186,6 @@ export function ClaudeSettingsCard({ defaultValues }: ClaudeSettingsCardProps) {
         {/* eslint-disable-next-line react-hooks/refs */}
         <SettingsForm onSubmit={form.handleSubmit(onSubmit)}>
           <SettingsPageFormActions
-            // eslint-disable-next-line react-hooks/refs
             onSave={form.handleSubmit(onSubmit)}
             isSaving={updateOption.isPending}
           />
@@ -255,7 +254,7 @@ export function ClaudeSettingsCard({ defaultValues }: ClaudeSettingsCardProps) {
                     <FormLabel>{t('Thinking Suffix Adapter')}</FormLabel>
                     <FormDescription>
                       {t(
-                        'Adapt `-thinking` suffix requests to Anthropic native thinking behavior while keeping billing predictable.'
+                        'Adapt `-thinking`, `-nothinking`, and effort suffixes such as `-high` to Anthropic native thinking behavior while keeping billing predictable. When off, model names are sent upstream unchanged.'
                       )}
                     </FormDescription>
                   </SettingsSwitchContent>

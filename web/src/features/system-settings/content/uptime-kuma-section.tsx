@@ -49,6 +49,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { handleServerError } from '@/lib/handle-server-error'
 
 import { SettingsSwitchField } from '../components/settings-form-layout'
 import { SettingsSection } from '../components/settings-section'
@@ -114,7 +115,6 @@ export function UptimeKumaSection({ enabled, data }: UptimeKumaSectionProps) {
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setGroups(
           parsed.map((item, idx) => ({
             ...item,
@@ -128,7 +128,6 @@ export function UptimeKumaSection({ enabled, data }: UptimeKumaSectionProps) {
   }, [data])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 
@@ -140,8 +139,8 @@ export function UptimeKumaSection({ enabled, data }: UptimeKumaSectionProps) {
       })
       setIsEnabled(checked)
       toast.success(t('Setting saved'))
-    } catch {
-      toast.error(t('Failed to update setting'))
+    } catch (error) {
+      handleServerError(error, t('Failed to update setting'))
     }
   }
 
@@ -224,8 +223,8 @@ export function UptimeKumaSection({ enabled, data }: UptimeKumaSectionProps) {
       })
       setHasChanges(false)
       toast.success(t('Uptime Kuma groups saved successfully'))
-    } catch {
-      toast.error(t('Failed to save Uptime Kuma groups'))
+    } catch (error) {
+      handleServerError(error, t('Failed to save Uptime Kuma groups'))
     }
   }
 

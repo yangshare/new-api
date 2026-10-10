@@ -32,6 +32,7 @@ import {
   sideDrawerSwitchItemClassName,
 } from '@/components/drawer-layout'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
 import {
   Form,
   FormControl,
@@ -61,7 +62,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
+import { getPaymentErrorTranslation } from '@/features/wallet/lib/payment'
 import { getCurrencyDisplay, getCurrencyLabel } from '@/lib/currency'
+import { handleServerError } from '@/lib/handle-server-error'
 
 import {
   createPlan,
@@ -99,7 +102,6 @@ export function SubscriptionsMutateDrawer({
   const tokensOnly = currencyMeta.kind === 'tokens'
   const currencyLabel = getCurrencyLabel()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [applyToExisting, setApplyToExisting] = useState(false)
   const [groupOptions, setGroupOptions] = useState<string[]>([])
   const [creatingPancakeProduct, setCreatingPancakeProduct] = useState(false)
   const [pancakeProducts, setPancakeProducts] = useState<
@@ -119,10 +121,13 @@ export function SubscriptionsMutateDrawer({
       } else {
         form.reset(PLAN_FORM_DEFAULTS)
       }
-      setApplyToExisting(false)
       getGroups()
         .then((res) => {
-          if (res.success) setGroupOptions(res.data || [])
+          if (res.success) {
+            setGroupOptions(res.data || [])
+          } else {
+            handleServerError(res)
+          }
         })
         .catch(() => {})
       // Best-effort — empty list still lets the operator use "+ Create".
@@ -160,22 +165,13 @@ export function SubscriptionsMutateDrawer({
     try {
       const payload = formValuesToPlanPayload(values)
       if (isEdit && currentRow?.plan?.id) {
-        if (applyToExisting) {
-          payload.apply_to_existing = true
-        }
         const res = await updatePlan(currentRow.plan.id, payload)
         if (res.success) {
-          if (applyToExisting && res.data?.synced_count) {
-            toast.success(
-              t('Updated; synced {{count}} active subscriptions', {
-                count: res.data.synced_count,
-              })
-            )
-          } else {
-            toast.success(t('Update succeeded'))
-          }
+          toast.success(t('Update succeeded'))
           onOpenChange(false)
           triggerRefresh()
+        } else {
+          handleServerError(res)
         }
       } else {
         const res = await createPlan(payload)
@@ -183,10 +179,12 @@ export function SubscriptionsMutateDrawer({
           toast.success(t('Create succeeded'))
           onOpenChange(false)
           triggerRefresh()
+        } else {
+          handleServerError(res)
         }
       }
-    } catch {
-      toast.error(t('Request failed'))
+    } catch (error) {
+      handleServerError(error, t('Request failed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -242,15 +240,18 @@ export function SubscriptionsMutateDrawer({
           `${t('Waffo Pancake product created')}: ${created.product_id}`
         )
       } else {
-        const reason = typeof res.data === 'string' ? res.data : undefined
-        toast.error(
-          reason
+        const reason =
+          getPaymentErrorTranslation(res) ??
+          (typeof res.data === 'string' ? res.data : undefined)
+        handleServerError(res.data, undefined, {
+          title: reason
             ? `${t('Waffo Pancake product creation failed')}: ${reason}`
-            : t('Waffo Pancake product creation failed')
-        )
+            : t('Waffo Pancake product creation failed'),
+        })
       }
     } catch (err) {
-      toast.error(
+      handleServerError(
+        err,
         `${t('Waffo Pancake product creation failed')}: ${err instanceof Error ? err.message : String(err)}`
       )
     } finally {
@@ -406,34 +407,23 @@ export function SubscriptionsMutateDrawer({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('Upgrade Group')}</FormLabel>
-                      <Select
-                        items={[
-                          { value: '__none__', label: t('No Upgrade') },
-                          ...groupOptions.map((g) => ({ value: g, label: g })),
-                        ]}
-                        onValueChange={(v) =>
-                          field.onChange(v === '__none__' ? '' : v)
-                        }
-                        value={field.value || ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('No Upgrade')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent alignItemWithTrigger={false}>
-                          <SelectGroup>
-                            <SelectItem value='__none__'>
-                              {t('No Upgrade')}
-                            </SelectItem>
-                            {groupOptions.map((g) => (
-                              <SelectItem key={g} value={g}>
-                                {g}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={[
+                            { value: '__none__', label: t('No Upgrade') },
+                            ...groupOptions.map((g) => ({
+                              value: g,
+                              label: g,
+                            })),
+                          ]}
+                          onValueChange={(v) =>
+                            field.onChange(v === '__none__' ? '' : v)
+                          }
+                          value={field.value || ''}
+                          className='w-full'
+                          placeholder={t('No Upgrade')}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -445,39 +435,26 @@ export function SubscriptionsMutateDrawer({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('Downgrade Group')}</FormLabel>
-                      <Select
-                        items={[
-                          {
-                            value: '__none__',
-                            label: t('Downgrade to pre-purchase group'),
-                          },
-                          ...groupOptions.map((g) => ({ value: g, label: g })),
-                        ]}
-                        onValueChange={(v) =>
-                          field.onChange(v === '__none__' ? '' : v)
-                        }
-                        value={field.value || ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={t('Downgrade to pre-purchase group')}
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent alignItemWithTrigger={false}>
-                          <SelectGroup>
-                            <SelectItem value='__none__'>
-                              {t('Downgrade to pre-purchase group')}
-                            </SelectItem>
-                            {groupOptions.map((g) => (
-                              <SelectItem key={g} value={g}>
-                                {g}
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={[
+                            {
+                              value: '__none__',
+                              label: t('Downgrade to pre-purchase group'),
+                            },
+                            ...groupOptions.map((g) => ({
+                              value: g,
+                              label: g,
+                            })),
+                          ]}
+                          onValueChange={(v) =>
+                            field.onChange(v === '__none__' ? '' : v)
+                          }
+                          value={field.value || ''}
+                          className='w-full'
+                          placeholder={t('Downgrade to pre-purchase group')}
+                        />
+                      </FormControl>
                       <FormDescription>
                         {t(
                           'Downgrade to this group after the subscription expires'
@@ -591,30 +568,6 @@ export function SubscriptionsMutateDrawer({
                     </FormItem>
                   )}
                 />
-
-                {isEdit && (
-                  <div
-                    className={sideDrawerSwitchItemClassName(
-                      'grid min-h-0 grid-cols-[minmax(0,1fr)_auto] justify-normal gap-x-3 gap-y-1 sm:grid-cols-[minmax(10rem,1fr)_minmax(0,1.5fr)_auto] sm:gap-x-4'
-                    )}
-                  >
-                    <FormLabel className='!mt-0'>
-                      {t('Apply changes to existing subscriptions')}
-                    </FormLabel>
-                    <p className='text-muted-foreground col-span-2 text-xs sm:col-span-1 sm:col-start-2 sm:row-start-1'>
-                      {t(
-                        'Sync the new quota and reset period to active subscribers. Used quota is kept.'
-                      )}
-                    </p>
-                    <Switch
-                      checked={applyToExisting}
-                      className='col-start-2 row-start-1 justify-self-end sm:col-start-3'
-                      onCheckedChange={(checked) =>
-                        setApplyToExisting(!!checked)
-                      }
-                    />
-                  </div>
-                )}
               </div>
             </SideDrawerSection>
 
@@ -838,23 +791,14 @@ export function SubscriptionsMutateDrawer({
                     <FormItem>
                       <FormLabel>Waffo Pancake Product ID</FormLabel>
                       <div className='flex gap-2'>
-                        <Select
-                          items={items}
+                        <Combobox
+                          options={items}
                           value={field.value || ''}
                           onValueChange={(v) => field.onChange(v)}
                           disabled={items.length === 0}
-                        >
-                          <SelectTrigger className='w-full flex-1'>
-                            <SelectValue placeholder={t('Select a product')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {items.map((item) => (
-                              <SelectItem key={item.value} value={item.value}>
-                                {item.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          className='w-full flex-1'
+                          placeholder={t('Select a product')}
+                        />
                         <Button
                           type='button'
                           variant='outline'
