@@ -33,6 +33,7 @@
 3. `go test ./model/ -run Subscription`（订阅链路）
 4. web 目录：`bun install`（上游可能新增依赖）→ `bun run typecheck` → `bun run build`
 5. `bun run format:check`（**只读**；禁止 `format --write`）。若失败：只对手工修复受影响行，不允许全局写回。
+   > 勘误（2026-10-11）：`scripts/format-with-protected-headers.mjs` 内 `spawnSync('oxfmt', ...)` 在 Windows + node 下因不带扩展名解析而 ENOENT，脚本**静默 exit 1 无任何输出**——勿误判为格式问题。绕过：`$env:PATH = "E:\开源项目\new-api\web\node_modules\.bin;$env:PATH"` 后直接 `& node_modules\.bin\oxfmt.exe -c .oxfmtrc.json --ignore-path .gitignore --check <改动文件>`（注意 web 目录内相对路径，git status 的 `web/` 前缀要剥掉）；判定标准=无 "Format issues found in above N files" 汇总行且 exit 0。
 6. 保护文件核对：
    ```powershell
    git diff dev-backup-pre-sync -- CLAUDE.md web/src/styles/theme.css
@@ -50,23 +51,41 @@ $both         = @(git diff --name-only "$mb..$backup" | Where-Object { (git diff
 #    （含 B 项的文件在下面 $replayFiles 里列出，豁免该断言）
 $replayFiles = @(
   'model/subscription.go'
+  'controller/subscription.go'
+  'docker-compose.yml'
+  'web/.oxlintrc.json'
+  'web/rsbuild.config.ts'
+  'web/src/lib/theme-customization.ts'
+  'web/src/context/theme-customization-provider.tsx'
   'service/channel_affinity_usage_cache_test.go'
   '.github/workflows/electron-build.yml'; '.github/workflows/release.yml'; '.gitignore'; 'Dockerfile'
   'web/src/i18n/locales/en.json'; 'web/src/i18n/locales/fr.json'; 'web/src/i18n/locales/ja.json'
   'web/src/i18n/locales/ru.json'; 'web/src/i18n/locales/vi.json'; 'web/src/i18n/locales/zh-TW.json'; 'web/src/i18n/locales/zh.json'
   'web/src/features/auth/sign-in/components/user-auth-form.tsx'
+  'web/src/features/auth/hooks/use-oauth-login.ts'
   'web/src/features/channels/components/dialogs/balance-query-dialog.tsx'
   'web/src/features/channels/components/dialogs/fetch-models-dialog.tsx'
+  'web/src/features/channels/components/dialogs/edit-tag-dialog.tsx'
+  'web/src/features/channels/components/dialogs/multi-key-manage-dialog.tsx'
+  'web/src/features/channels/components/dialogs/ollama-models-dialog.tsx'
+  'web/src/features/channels/components/dialogs/param-override-editor-dialog.tsx'
+  'web/src/features/channels/components/dialogs/tag-batch-edit-dialog.tsx'
+  'web/src/features/channels/components/model-mapping-editor.tsx'
   'web/src/features/dashboard/lib/flow.test.ts'
   'web/src/features/models/components/drawers/model-mutate-drawer.tsx'
-  'web/src/features/profile/components/tabs/account-bindings-tab.tsx'
   'web/src/features/system-settings/auth/oauth-section.tsx'
   'web/src/features/system-settings/billing/section-registry.tsx'
   'web/src/features/system-settings/models/ratio-settings-card.tsx'
-  'web/src/features/system-settings/models/routing-reliability-section.tsx'
+  'web/src/features/system-settings/models/model-ratio-form.tsx'
+  'web/src/features/system-settings/models/model-ratio-table-columns.tsx'
+  'web/src/features/system-settings/models/upstream-ratio-sync.tsx'
+  'web/src/features/system-settings/general/channel-affinity/index.tsx'
+  'web/src/features/subscriptions/components/subscriptions-mutate-drawer.tsx'
   'web/src/features/usage-logs/components/dialogs/details-dialog.tsx'
+  'web/src/features/usage-logs/components/columns/common-logs-columns.tsx'
   'web/src/features/usage-logs/lib/format.ts'
   'web/src/features/users/components/dialogs/user-binding-dialog.tsx'
+  'web/src/features/users/components/users-table.tsx'
   'web/src/features/wallet/hooks/use-billing-history.ts'
 )
 foreach ($f in $both) {
@@ -93,12 +112,12 @@ foreach ($f in $oursOnly) {
 | 组 | 内容 |
 |---|---|
 | relay 适配 | `relay/channel/ai360/`（360AI 渠道适配 + 敏感数据遮蔽，注意上游历史里也有同名目录，属共享基底，本地在其上叠了一个 feature commit）；含 `constants_test.go` 模型列表回归 |
-| 订阅特性后端 | `model/subscription_sync_test.go`；`controller/subscription.go` 内 SyncPlanSubscriptionsTx 调用面（文件本体上游也有，本地对其增量当前未被上游触碰） |
-| multikey 日志前端 | `web/src/features/usage-logs/lib/format-multikey.test.ts`；`web/src/features/usage-logs/components/columns/common-logs-columns.tsx` 内多键列显示（上游本次未碰；若未来上游改它，此项升级进 B 类） |
+| 订阅特性后端 | `model/subscription_sync_test.go`；`controller/subscription.go` 内 SyncPlanSubscriptionsTx 调用面（2026-10 起上游也动该文件，调用面融合归 B8） |
+| multikey 日志前端 | `web/src/features/usage-logs/lib/format-multikey.test.ts`；多键列显示已于 2026-10 升级进 B18（`common-logs-columns.tsx` 上游已触碰） |
 | 价格表草稿徽标 | `web/src/features/system-settings/models/model-ratio-table-columns.tsx` 本地渲染（详见 B12；数据结构来自上游原生 model-pricing-snapshots） |
-| 前端工程配置 | `web/.oxlintrc.json`、`web/rsbuild.config.ts` 改动、`web/scripts/` i18n/format 脚本 |
+| 前端工程配置 | `web/.oxlintrc.json`（B15）、`web/rsbuild.config.ts`（B16）、`web/scripts/` i18n/format 脚本 |
 | 工具脚本 | `scripts/start-dev.ps1`、`scripts/release.bat`、`scripts/sync-script-tests.ps1`、`scripts/README.md` |
-| 测试 | `service/codex_wham_usage_test.go`；`web/src/components/ui/dialog-content-width.test.ts`（DialogContent 宽度约定扫描）；随上游 vitest 化（2026-08-27） |
+| 测试 | `service/codex_wham_usage_test.go`；`web/src/components/ui/dialog-content-width.test.ts`（DialogContent 宽度约定扫描，2026-10 抓到上游新文件 marketplace-sources-dialog 违规一次）；随上游 vitest 化（2026-08-27） |
 | 文档 | `docs/superpowers/**`、`docs/upstream-sync.md` 本手册 |
 
 > 历史行记录：silent-batch 前端库（update-option-results）、theme.css 黑白灰预设、index.html 防闪烁脚本已于 2026-08-27 随 B4/B5 退役从本表移除。
@@ -233,7 +252,9 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 
 ### B6 `CLAUDE.md` — 项目规则段
 
-锚点：`Rule 9`。保持 Rule 5（保护信息）与 Rule 9（后端测试质量）两大段在位；superpowers-zh 框架段已被主动删除，**勿恢复**（同时见 C2）。上游至今未动此文件。
+锚点：`AGENTS.md`。保持 Rule 5（保护信息）与 Rule 9（后端测试质量）两大段在位；superpowers-zh 框架段已被主动删除，**勿恢复**（同时见 C2）。
+
+> 2026-10-11 轮更新：上游把 CLAUDE.md 重写为薄文件（强制 Read AGENTS.md + billing 读门），并把保护信息（AGENTS.md「Protected project information」）与测试质量（「Backend test quality」含 testify 要求）收入 AGENTS.md。B6 的两大段由上游结构天然承载，**本轮起 CLAUDE.md 整文件取上游、不再重放**；C2 反向断言（superpowers-zh 缺席）仍须每轮执行。若未来上游从 AGENTS.md 移除这两段，恢复为「CLAUDE.md 内联重放」。
 
 ### B7 dockeronly 构建定制（四个构建文件各一行级）
 
@@ -249,8 +270,8 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 ### B8 `model/subscription.go` — 计划变更同步存量订阅
 
 锚点：`SyncPlanSubscriptionsTx`。在 `adminResetPlanSubscriptionsTx` 函数后、`func AdminResetUserSubscriptionsByPlan(` 之前插入 `SubscriptionPlanSyncResult` 结构体 + `SyncPlanSubscriptionsTx` 函数（约 72 行）。原文可用提取命令取得：`git show dev-backup-pre-sync:model/subscription.go` 中搜索 `SubscriptionPlanSyncResult reports`。
-上游侧确认（2026-08 轮）：其实现的依赖 `calcNextResetTime`、`lockForUpdate`、`UserSubscription.AmountTotal/AmountUsed/NextResetTime/LastResetTime` 均仍在上游文件中。
-调用方 `controller/subscription.go` 与回归测试 `model/subscription_sync_test.go` 都是本地侧独改/独有文件，merge 自然保留；仅当未来上游也动 `controller/subscription.go` 时才需要手工融合这两处。
+上游侧确认（2026-10 轮）：其实现的依赖 `calcNextResetTime`、`lockForUpdate`、`UserSubscription.AmountTotal/AmountUsed/NextResetTime/LastResetTime` 均仍在上游文件中。
+调用方 `controller/subscription.go`（2026-10 轮上游也动了该文件，已手工融合：`errors` import、`ApplyToExisting` 字段、事务内存在性检查 + 同步块、`syncResult` 响应分支——以 `dev-backup-pre-sync` 版 diff 为准重放）与回归测试 `model/subscription_sync_test.go` 融合说明如上；B14 是本特性的前端面。
 
 ### B9 `service/channel_affinity_usage_cache_test.go` — 测试 ID uuid 化
 
@@ -266,52 +287,81 @@ func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
 
 ### B10 杂项 lint/样式小组（逐文件单点）
 
-锚点：`set-state-in-effect`。为通过本地 oxlint 规则而存在的抑制注释（规则来自 A 类 `web/.oxlintrc.json`；上游无此配置但其新代码落地后会在本地触发告警，注释无害）：
+锚点：`set-state-in-effect`（各 eslint-disable 注释）。为通过本地 oxlint 规则而存在的抑制注释（规则来自 A 类 `web/.oxlintrc.json`；上游无此配置但其新代码落地后会在本地触发告警，注释无害）。2026-10 轮起本项数量大涨，按下述「现状清单」执行：**每轮覆盖后先跑漂移检测，凡与本清单不符的文件按 backup 版 diff 重放；锚点失配的文件先确认上游是否已重构消除该模式，消除则废弃，仍在则按新锚点补注释。**
 
-| 文件 | 在哪一行的正上方插哪一行 |
+2026-10 轮现状清单（文件 ← 注释类型）：
+
+| 文件 | 重放内容 |
 |---|---|
-| `web/src/features/auth/sign-in/components/user-auth-form.tsx` | `setAgreedToLegal(false)` ← `// eslint-disable-next-line react-hooks/set-state-in-effect` |
-| `web/src/features/channels/components/dialogs/balance-query-dialog.tsx` | `handleQueryCodexUsage()` ← 同上注释 |
-| `web/src/features/channels/components/dialogs/fetch-models-dialog.tsx` | `handleFetchModels()` ← `// eslint-disable-next-line react-hooks/immutability`；另 `contentClassName='max-w-3xl'` → `'sm:max-w-3xl'` |
-| `web/src/features/profile/components/tabs/account-bindings-tab.tsx` | `fetchCustomBindings()` ← set-state-in-effect 注释 |
-| `web/src/features/system-settings/auth/oauth-section.tsx` | `<SettingsForm onSubmit={form.handleSubmit(onSubmit)}>` ← `{/* eslint-disable-next-line react-hooks/refs */}`；`onSave={form.handleSubmit(onSubmit)}` ← `// eslint-disable-next-line react-hooks/refs` |
-| `web/src/features/users/components/dialogs/user-binding-dialog.tsx` | `setShowBoundOnly(true)` ← set-state-in-effect 注释 |
-| `web/src/features/wallet/hooks/use-billing-history.ts` | `fetchBillingHistory()` ← set-state-in-effect 注释 |
-| `web/src/features/models/components/drawers/model-mutate-drawer.tsx` | `setOldModelName(model.model_name)` ← set-state-in-effect 注释 |
-| `web/src/features/system-settings/models/claude-settings-card.tsx` | `<SettingsPageFormActions` 内 `onSave={...}` 上方 ← `{/* eslint-disable-next-line react-hooks/refs */}`（JSX 注释版） |
-| `web/src/features/system-settings/models/tiered-pricing-editor.tsx` | 两处：`setDraft(formatNumberDraft(value))` 与 `if (hasMediaPricing) setMediaOpen(true)` ← set-state-in-effect 注释 |
-| `web/src/features/system-settings/models/upstream-ratio-sync.tsx` | `setChannelEndpoints((prev) => {` ← set-state-in-effect 注释 |
-| `web/src/features/system-settings/models/conflict-confirm-dialog.tsx` | 对话框宽度：`className='max-w-4xl'` → `'w-[calc(100vw-2rem)] !max-w-4xl'`（样式修正，非 lint） |
-| `web/src/features/system-settings/models/routing-reliability-section.tsx` | 见下方独立片段（基线序列化同步） |
+| `web/src/features/auth/sign-in/components/user-auth-form.tsx` | `setAgreedToLegal(false)` ← set-state-in-effect |
+| `web/src/features/channels/components/dialogs/balance-query-dialog.tsx` | `handleQueryCodexUsage()` ← set-state-in-effect（上游已有 exhaustive-deps 注释，并存） |
+| `web/src/features/channels/components/dialogs/fetch-models-dialog.tsx` | `handleFetchModels()` ← immutability；`contentClassName='max-w-3xl'` → `'sm:max-w-3xl'` |
+| `web/src/features/channels/components/dialogs/edit-tag-dialog.tsx` | `setNewTag(currentTag)` ← set-state-in-effect；`max-w-2xl` → `sm:max-w-2xl` |
+| `web/src/features/channels/components/dialogs/multi-key-manage-dialog.tsx` | `setCurrentPage(1)` ← set-state-in-effect；`loadKeyStatus(1, pageSize, null)` ← immutability；`max-w-5xl` → `sm:max-w-5xl` |
+| `web/src/features/channels/components/dialogs/ollama-models-dialog.tsx` | `setModels([])`（`if (!open)` 块内那个）← set-state-in-effect；`void fetchOllamaModels()` ← immutability；`const fetchOllamaModels = useCallback` ← preserve-manual-memoization |
+| `web/src/features/channels/components/dialogs/param-override-editor-dialog.tsx` | `setEditMode(state.editMode)` 与空分支 `setSelectedOperationId('')` ← set-state-in-effect ×2 |
+| `web/src/features/channels/components/dialogs/tag-batch-edit-dialog.tsx` | `loadTagData()` ← immutability；`max-w-2xl` → `sm:max-w-2xl` |
+| `web/src/features/channels/components/model-mapping-editor.tsx` | `parseJsonToRows(props.value)` 行之下、依赖数组之前 ← exhaustive-deps |
+| `web/src/features/auth/hooks/use-oauth-login.ts` | `setGithubButtonText(...)` ← set-state-in-effect |
+| `web/src/features/models/components/dialogs/extend-deployment-dialog.tsx` | `if (open) setHours(1)` ← set-state-in-effect |
+| `web/src/features/models/components/dialogs/missing-models-dialog.tsx` | `max-w-2xl` → `sm:max-w-2xl` |
+| `web/src/features/models/components/dialogs/prefill-group-management-dialog.tsx` | `setDeleteState({...})` ← set-state-in-effect |
+| `web/src/features/models/components/dialogs/rename-deployment-dialog.tsx` | `if (open) setName(...)` ← set-state-in-effect |
+| `web/src/features/profile/components/checkin-calendar-card.tsx` | `setCollapsed(checkedToday)` ← set-state-in-effect |
+| `web/src/features/profile/components/language-preferences-card.tsx` | `setCurrentLanguage(...)` ← set-state-in-effect |
+| `web/src/features/profile/components/sidebar-modules-card.tsx` | `loadConfig()` ← set-state-in-effect |
+| `web/src/features/profile/components/tabs/notification-tab.tsx` | `setSettings(normalizeUserSettings(profile.setting))` ← set-state-in-effect（上游重构后锚点） |
+| `web/src/features/profile/hooks/use-profile.ts` | `fetchProfile()` ← set-state-in-effect |
+| `web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx` | `setSelectedEpayMethod(...)` ← set-state-in-effect |
+| `web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx` | `const loadData = useCallback` ← preserve-manual-memoization；`setSelectedPlanId('')` ← set-state-in-effect |
+| `web/src/features/system-settings/auth/oauth-section.tsx` | `<SettingsForm onSubmit=...>` ← JSX 版 refs 注释；`onSave={form.handleSubmit(onSubmit)}` ← refs 注释 |
+| `web/src/features/system-settings/auth/passkey-section.tsx` | 【2026-10 未重放】上游重构后待 lint 实跑决策 |
+| `web/src/features/system-settings/content/announcements-section.tsx` | `setAnnouncements(` 与 `setIsEnabled(enabled)` ← set-state-in-effect ×2；`max-w-2xl` → `sm:max-w-2xl` |
+| `web/src/features/system-settings/content/faq-section.tsx` | `setFaqList(` 与 `setIsEnabled(enabled)` ← ×2；`max-w-2xl` → `sm:max-w-2xl` |
+| `web/src/features/system-settings/content/uptime-kuma-section.tsx` | `setGroups(` 与 `setIsEnabled(enabled)` ← ×2 |
+| `web/src/features/system-settings/general/channel-affinity/index.tsx` | `void refreshCache()` ← set-state-in-effect |
+| `web/src/features/system-settings/models/claude-settings-card.tsx` | `onSave={form.handleSubmit(onSubmit)}` ← refs 注释（SettingsForm 处那条上游已自带） |
+| `web/src/features/system-settings/models/upstream-ratio-sync.tsx` | `setChannelEndpoints((previous) => {` ← set-state-in-effect（上游把 `prev` 改名 `previous`） |
+| `web/src/features/users/components/dialogs/user-binding-dialog.tsx` | `setShowBoundOnly(true)`（6 空格锚点）← set-state-in-effect |
+| `web/src/features/users/components/users-table.tsx` | queryKey 内 `statusFilter, roleFilter` → `statusFilter[0], statusFilter.length, roleFilter[0], roleFilter.length`（数组身份稳定性修复） |
+| `web/src/features/wallet/components/subscription-plans-card.tsx` | 两处 `const now = Date.now() / 1000` ← purity 注释 |
+| `web/src/features/wallet/hooks/use-affiliate.ts` | `fetchAffiliateCode()` ← set-state-in-effect |
+| `web/src/features/wallet/hooks/use-billing-history.ts` | `fetchBillingHistory()` ← set-state-in-effect |
+| `web/src/features/task-plugins/components/marketplace-sources-dialog.tsx` | `<DialogContent className='max-w-2xl'>` → `'sm:max-w-2xl'`（2026-10 新上游文件的约定违规，dialog-content-width 测试守护） |
 
-routing-reliability-section 本地改进（防止 defaultValues 外部刷新后 baseline 过期）：
-1. `const baselineRef = useRef<NormalizedRoutingReliabilityValues>(normalizeDefaults(defaultValues))` 声明之后加：
+2026-10 废弃记录（上游已自行解决，勿再重放）：`account-bindings-tab.tsx`（文件被上游删除）、`use-secure-verification.ts`（useReducer 重构）、`sync-wizard-dialog.tsx`（open-init useEffect 移除）、`model-mutate-drawer.tsx` 的 `setOldModelName`（锚点消失）、`conflict-confirm-dialog.tsx` 宽度（上游改用 `data-[size=default]:max-w-[calc(100%-2rem)]` 响应式方案）、`routing-reliability-section.tsx`（上游 rename 到 `request-policies/channel-health-section.tsx` 并自行实现等价 baseline 同步 `useEffect(() => { baselineRef.current = normalizeDefaults(defaultValues) }, [defaultValues])`）、`tiered-pricing-editor.tsx`（上游重写为表达式编辑器，两处旧注释锚点消失；是否需要新注释待 lint 实跑决策，与 passkey-section 同批）。
 
-```tsx
-  const baselineSerializedRef = useRef<string>(
-    JSON.stringify(normalizeDefaults(defaultValues))
-  )
-```
-
-2. `useResetForm(form, formDefaults)` 之后加：
-
-```tsx
-  useEffect(() => {
-    const normalized = normalizeDefaults(defaultValues)
-    const serialized = JSON.stringify(normalized)
-    if (serialized === baselineSerializedRef.current) return
-    baselineRef.current = normalized
-    baselineSerializedRef.current = serialized
-  }, [defaultValues])
-```
-
-3. handler 末尾 `baselineRef.current = normalized` 之后加一行 `baselineSerializedRef.current = JSON.stringify(normalized)`。
-4. React import 需要 `useEffect`（缺则补）。
-另有一处**有意放弃**：user-binding-dialog 中原 diff 还包含两个空行分隔，纯排版噪声，不重放。
+有意放弃（2026-08 起）：user-binding-dialog 中原 diff 的空行分隔、`api-key-group-cell.tsx` 格式化收拢、`missing-models-dialog.tsx`/`sync-wizard-dialog.tsx` 空行，纯排版噪声。
 
 ### B12 `model-ratio-table-columns.tsx` — 价格表草稿徽标（2026-08-27 补录）
 
 锚点：`isDraftChanged`、`Will be removed`。本地在 `buildModelRatioColumns` 的 name 列与价格明细列各渲染一个 Draft 徽标块（约 +30 行），数据来自上游原生 `model-pricing-snapshots.ts` 行结构（isDraftChanged/isDraftDeleted/draft 字段由 `model-ratio-visual-editor.tsx` 填充，均上游代码）。i18n 依赖 B11 键 2/3。某轮覆盖后重放：从 `dev-backup-pre-sync` 提取该文件 diff，两段徽标 JSX 按上游结构回插即可。
+
+> 2026-10 轮：上游重构了 buildModelRatioColumns（任务定价徽标等），两段徽标已按新结构回插（name 列插在 `<span>{row.getValue('name')}</span>` 之后；priceSummary 列插在第二个 `<span>` 之后），数据结构未变。
+
+### B13 `docker-compose.yml` — 本地部署定制（2026-10-11 补录）
+
+锚点：`localhost/redis`、`3003:3000`。整文件取上游后重放：`new-api` 服务 `image:` 换 `build: .`、端口 `3003:3000`、卷挂 `/home/docker/new-api/{data,logs}`；`redis` 与 `postgres` 镜像用本地 `localhost/` 前缀、redis 暴露 6379、postgres 卷挂 `/home/docker/pg_data` 且暴露 5432（LAN + 防火墙约定）。注意上游持续扩充 environment 注释与 clickhouse/mysql 服务段，重放时以上述锚点逐处替换、不整块回贴。
+
+### B14 `subscriptions-mutate-drawer.tsx` — B8 的前端开关（2026-10-11 补录）
+
+锚点：`applyToExisting`。四处：`useState` 声明；useEffect open 块内 `setApplyToExisting(false)`；提交 handler 中 `payload.apply_to_existing = true` + `synced_count` toast（用 B11 键 5）；allow_wallet_overflow FormItem 之后 `{isEdit && (...)}` 开关 UI 块（用 B11 键 1/4）。上游若重构此抽屉，从 `dev-backup-pre-sync` 提取该文件 diff 对插。
+
+### B15 `web/.oxlintrc.json` — 规则降级 error→warn（2026-10-11 补录）
+
+锚点：`"curly": ["warn", "multi-line"]`。11 条规则降级（curly、no-nested-ternary、promise/catch-or-return、react/jsx-no-useless-fragment、react/no-array-index-key、typescript/no-import-type-side-effects、typescript/no-non-null-assertion、unicorn/prefer-at、unicorn/prefer-optional-catch-binding、unicorn/prefer-spread、unicorn/prefer-string-replace-all）。整文件取上游后逐条把 `"error"` 改回 `"warn"`（只动这 11 条，上游新增规则保持上游原级别）。
+
+### B16 `web/rsbuild.config.ts` — dev 端口 5173（2026-10-11 补录）
+
+锚点：`port: 5173`。server 块内 `host` 之后插入两行中文注释 + `port: 5173,`（避免 dev server 抢占后端 3000 端口导致 /api 代理回环挂起）。
+
+### B17 默认主题预设 anthropic（2026-10-11 补录，v1.2.3 特性）
+
+锚点：`preset: 'anthropic'`（`web/src/lib/theme-customization.ts` 的 DEFAULT_THEME_CUSTOMIZATION）。配套 `web/src/context/theme-customization-provider.tsx`：`data-theme-preset` **始终写入**（不得按默认值省略——anthropic 只能经 `[data-theme-preset='anthropic']` 块生效，与 radius/scale 的"删属性回退"机制不同），注释连同回插。上游的 `theme-preferences.test.tsx` 断言上游默认语义，需按本地语义同步修改：preset 断言改 `toHaveAttribute('data-theme-preset', 'anthropic')`；defaults 语境的 `data-theme-font` 断言改 `'serif'`（anthropic 预设默认字体；显式切 Default preset 的用例仍为 `'system'`）。
+
+### B18 `common-logs-columns.tsx` — 列表多键徽标（2026-10-11 A→B 升级）
+
+锚点：`getMultiKeyIndex`。原 A 类观察项（"上游若改它，此项升级进 B 类"）已成真：重放 = import `getMultiKeyIndex`；`const other = parseLogOther(log.other)` 之后插 multiKeyIndex/multiKeyLabel/multiKeyTitle 三段；删除上游原内联 `showMultiKeyIndex` 判定；徽标块换 B3 同款（K 前缀 + title + neutral 样式）；敏感信息折叠区 `{t('Key')}: ...` 条件改 `multiKeyIndex !== null`。
 
 > 补录说明：此前手册漏登本项；2026-08-27 与上游比对全量差异时发现并归档。同步发现 `model-ratio-form.tsx` 约 151 行差异实为 C1 的管线移除（variant/unset 全套），已并入 C1 记录，非独立特性。
 
@@ -341,18 +391,25 @@ $pairs = @(
   @('web/src/features/usage-logs/lib/format.ts','getMultiKeyIndex')
   @('web/src/features/usage-logs/lib/format-multikey.test.ts','getMultiKeyIndex')
   @('web/src/features/usage-logs/components/dialogs/details-dialog.tsx','multiKeyLabel')
+  @('web/src/features/usage-logs/components/columns/common-logs-columns.tsx','getMultiKeyIndex')
   @('web/src/features/system-settings/models/model-ratio-table-columns.tsx','isDraftChanged')
+  @('web/src/features/subscriptions/components/subscriptions-mutate-drawer.tsx','applyToExisting')
+  @('web/src/lib/theme-customization.ts','anthropic')
   @('web/src/styles/theme-presets.css','data-theme-preset')
-  @('CLAUDE.md','Rule 9')
+  @('CLAUDE.md','AGENTS.md')
   @('.github/workflows/release.yml','dockeronly')
   @('.github/workflows/electron-build.yml','dockeronly')
   @('.gitignore','*.rej')
   @('Dockerfile','oven/bun:latest')
+  @('docker-compose.yml','localhost/redis')
+  @('web/.oxlintrc.json','"curly": ["warn", "multi-line"]')
+  @('web/rsbuild.config.ts','port: 5173')
   @('model/subscription.go','SyncPlanSubscriptionsTx')
   @('controller/subscription.go','SyncPlanSubscriptionsTx')
   @('model/subscription_sync_test.go','SyncPlanSubscriptionsTx')
   @('service/channel_affinity_usage_cache_test.go','uniqueChannelAffinityUsageCacheTestID')
   @('web/src/features/users/components/dialogs/user-binding-dialog.tsx','set-state-in-effect')
+  @('web/src/features/task-plugins/components/marketplace-sources-dialog.tsx','sm:max-w-2xl')
   @('web/src/i18n/locales/en.json','Updated; synced {{count}} active subscriptions')
   @('web/src/i18n/locales/zh.json','将变更同步到已绑定订阅')
 )
@@ -361,6 +418,8 @@ foreach ($p in $pairs) {
   if ($hit -ge 1) { "PASS $($p[0]) <- $($p[1])" } else { "FAIL $($p[0]) <- $($p[1])" }
 }
 ```
+
+> 执行方式勘误（2026-10-11）：本节与漂移检测脚本的多行 `@(...)` 数组字面量在部分自动化 shell 环境会被逐字符拆散（元素退化为单字符，0 命中静默通过/全 FAIL）。稳定做法：把 pairs 写成 JSON 文件后 `ConvertFrom-Json` 再循环（`$p[0]`/`$p[1]` 语义不变）；交互式终端粘贴不受影响。
 
 反向断言（C 类与已退役项确已缺席，全部应无命中；文件不存在时 Test-Path 返回 False 即 PASS）：
 
@@ -413,3 +472,4 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
 | 2026-08-26 | bc14c18f6024e79cba1c08d02cd007796e12d668 | 83 commits | 手册首轮实战；封面考古结论：嵌套计费属共享基底；B 清单定稿 B1-B11 |
 | 2026-08-27 | bc14c18f（同轮收尾，未 push） | 0（83 已全部并入） | 门槛收尾：format:check 5 个上游带入文件按 oxfmt 归一（剥保护头流程）；三个本地 node:test 测试迁 vitest（dialog-content-width / update-option-results / format-multikey）；漂移脚本第 2 段 PS 判定勘误（见脚本下方注记） |
 | 2026-08-27 | —（非同步轮·退役专项） | — | 退役 B1/B4/B5：相关文件取上游或还原调用面，删 model_ratio_test.go 与孤儿 update-option-results(+test)；B11 键2 七语清理，实测发现 sync-i18n「最富语言选 base」对删键不友好——必须七语同时删净再跑 sync（纪律已写入 B11）；借机全量比对上游归档手册外差异：C1 补录 model-ratio-form 管线移除、B10 补列 4 文件、新增 B12 草稿徽标 |
+| 2026-10-11 | 8f6961c67 | 262 commits（1603 文件，+244k/−46k） | 最大单轮同步。上游架构级变更全收：任务适配器→JS 插件（moejs）、relaykit 大修+tokenkit、Responses WebSocket、表达式计费扩展、控制台 i18n 重写(#7712)、安全强化批。冲突面 71 文件整取上游后重放 60 个：B8 前后端融合（上游首触 controller/subscription.go）、B2/B3/B11/B12 常规、B7+B13 部署定制、B15/B16/B17/B18 补录建档、B10 扩至 35 文件并废弃 7 项（详见 B10 废弃记录）。rename 检测带出 2 个非 both 冲突（two-fa-setup-dialog、channel-health-section，整取上游）；上游删除 account-bindings-tab 接受；.codegraph/.superpowers/.zcode 借 B7 未重放窗口误入 merge commit，已补 fix commit 解除跟踪。C1 在新定价结构上重新执行（unset-models 页签/variant 管线清除 + editor-layout 测试收缩为单 variant）。locale 红线：七语混淆行与上游逐字节一致 PASS。门槛全过：go build/test、relaykit GOWORK=off、typecheck/build/vitest 2196 全绿、oxfmt 54 文件净（spawnSync ENOENT 勘误见验证门槛注）。theme-preferences 测试按 B17 本地语义改写（preset=anthropic、defaults 字体 serif）。 |

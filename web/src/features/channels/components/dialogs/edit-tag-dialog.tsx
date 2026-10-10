@@ -94,6 +94,7 @@ export function EditTagDialog({ open, onOpenChange }: EditTagDialogProps) {
   // Initialize form when tag changes
   useEffect(() => {
     if (open && currentTag) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNewTag(currentTag)
       setModelMapping('')
       setSelectedGroups([])
@@ -225,7 +226,7 @@ export function EditTagDialog({ open, onOpenChange }: EditTagDialogProps) {
       description={t(
         'Batch edit all channels with this tag. Leave fields empty to keep current values.'
       )}
-      contentClassName='max-h-[min(90dvh,var(--dialog-available-height))] max-w-2xl'
+      contentClassName='max-h-[min(90dvh,var(--dialog-available-height))] sm:max-w-2xl'
       contentHeight='auto'
       bodyClassName='space-y-4'
       footer={

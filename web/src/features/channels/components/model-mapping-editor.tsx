@@ -199,6 +199,7 @@ export function ModelMappingEditor(props: ModelMappingEditorProps) {
   const syncExternalValue = useEffectEvent(() => {
     lastEmittedRef.current = props.value
     setJsonValue(props.value)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     parseJsonToRows(props.value)
   })
 

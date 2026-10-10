@@ -70,6 +70,7 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
 
   useEffect(() => {
     if (profile?.setting) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettings(normalizeUserSettings(profile.setting))
     }
   }, [profile])

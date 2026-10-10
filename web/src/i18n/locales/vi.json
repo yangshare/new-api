@@ -7252,6 +7252,11 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Updated; synced {{count}} active subscriptions": "Đã cập nhật; đã đồng bộ {{count}} gói đăng ký đang hoạt động",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "Đồng bộ hạn ngạch và chu kỳ đặt lại mới cho người đăng ký đang hoạt động. Hạn ngạch đã dùng được giữ nguyên.",
+    "Will be removed": "Sẽ bị xóa",
+    "Draft": "Bản nháp",
+    "Apply changes to existing subscriptions": "Áp dụng thay đổi cho các gói đăng ký hiện có"
   }
 }

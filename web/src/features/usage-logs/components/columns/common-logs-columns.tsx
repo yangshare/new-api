@@ -62,6 +62,7 @@ import {
   hasAnyCacheTokens,
   parseLogOther,
   isViolationFeeLog,
+  getMultiKeyIndex,
   logTokenName,
   renderAuditContent,
   renderLogContent,
@@ -399,6 +400,13 @@ export function useCommonLogsColumns(
             if (!isDisplayableLogType(log.type)) return null
 
             const other = parseLogOther(log.other)
+            const multiKeyIndex = getMultiKeyIndex(other)
+            const multiKeyLabel =
+              multiKeyIndex === null ? null : `K${multiKeyIndex}`
+            const multiKeyTitle =
+              multiKeyIndex === null
+                ? undefined
+                : `${t('Key')} ${t('Index')}: ${multiKeyIndex}`
             const affinity = other?.admin_info?.channel_affinity
             const rawUseChannel = other?.admin_info?.use_channel ?? []
             const useChannel = Array.isArray(rawUseChannel)
@@ -413,11 +421,6 @@ export function useCommonLogsColumns(
               : `#${log.channel}`
             const channelIdDisplay = `#${log.channel}`
             const channelName = sensitiveVisible ? log.channel_name : '••••'
-            const multiKeyIndex = other?.admin_info?.multi_key_index
-            const showMultiKeyIndex =
-              other?.admin_info?.is_multi_key === true &&
-              typeof multiKeyIndex === 'number' &&
-              Number.isFinite(multiKeyIndex)
 
             return (
               <TooltipProvider>
@@ -436,15 +439,16 @@ export function useCommonLogsColumns(
                         showDot={false}
                         className='font-mono'
                       />
-                      {showMultiKeyIndex && (
+                      {multiKeyLabel && (
                         <StatusBadge
-                          label={String(multiKeyIndex)}
+                          label={multiKeyLabel}
+                          variant='neutral'
                           size='sm'
                           showDot={false}
                           copyable={false}
-                          variant='neutral'
-                          className='h-5 min-w-5 justify-center rounded-full px-1 font-mono text-xs'
-                          aria-label={`${t('Key')} ${multiKeyIndex}`}
+                          title={multiKeyTitle}
+                          aria-label={multiKeyTitle}
+                          className='border-border/60 bg-muted/40 font-mono'
                         />
                       )}
                       {hasRetryChain && (
@@ -516,7 +520,7 @@ export function useCommonLogsColumns(
                           {t('Chain')}: {channelChain}
                         </p>
                       )}
-                      {showMultiKeyIndex && (
+                      {multiKeyIndex !== null && (
                         <p className='text-muted-foreground text-xs'>
                           {t('Key')}: {multiKeyIndex}
                         </p>

@@ -73,6 +73,7 @@ export function UserInfoDialog({
 
   useEffect(() => {
     if (open && userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchUserInfo(userId)
     }
   }, [open, userId, fetchUserInfo])

@@ -7252,6 +7252,11 @@
     "Zhipu": "智譜",
     "Zhipu GLM": "智譜GLM",
     "Zhipu V4": "智譜 V4",
-    "Zoom": "縮放"
+    "Zoom": "縮放",
+    "Updated; synced {{count}} active subscriptions": "已更新；已同步 {{count}} 個使用中的訂閱",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "將新的額度與重置週期同步至使用中的訂閱，已用額度會保留。",
+    "Will be removed": "將被移除",
+    "Draft": "草稿",
+    "Apply changes to existing subscriptions": "將變更套用至現有訂閱"
   }
 }

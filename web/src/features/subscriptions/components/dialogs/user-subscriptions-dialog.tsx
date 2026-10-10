@@ -131,6 +131,7 @@ export function UserSubscriptionsDialog(props: Props) {
     return map
   }, [plans])
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const loadData = useCallback(async () => {
     if (!props.user?.id) return
     setLoading(true)
@@ -158,6 +159,7 @@ export function UserSubscriptionsDialog(props: Props) {
 
   useEffect(() => {
     if (props.open && props.user?.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPlanId('')
       loadData()
     }

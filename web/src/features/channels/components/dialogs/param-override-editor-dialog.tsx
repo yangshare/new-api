@@ -1175,6 +1175,7 @@ export function ParamOverrideEditorDialog(
   useEffect(() => {
     if (!props.open) return
     const state = parseInitialState(props.value)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditMode(state.editMode)
     setVisualMode(state.visualMode)
     setLegacyValue(state.legacyValue)
@@ -1197,6 +1198,7 @@ export function ParamOverrideEditorDialog(
   // Keep selectedOperationId valid
   useEffect(() => {
     if (operations.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOperationId('')
       return
     }

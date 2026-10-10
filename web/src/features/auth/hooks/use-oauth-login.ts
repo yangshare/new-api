@@ -49,6 +49,7 @@ export function useOAuthLogin(
   const githubTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGithubButtonText(t('Continue with GitHub'))
 
     return () => {

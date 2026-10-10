@@ -7252,6 +7252,11 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Updated; synced {{count}} active subscriptions": "Обновлено; синхронизировано активных подписок: {{count}}",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "Синхронизировать новую квоту и период сброса с активными подписчиками. Использованная квота сохраняется.",
+    "Will be removed": "Будет удалено",
+    "Draft": "Черновик",
+    "Apply changes to existing subscriptions": "Применить изменения к существующим подпискам"
   }
 }

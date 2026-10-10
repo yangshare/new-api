@@ -7252,6 +7252,11 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Updated; synced {{count}} active subscriptions": "Updated; synced {{count}} active subscriptions",
+    "Sync the new quota and reset period to active subscribers. Used quota is kept.": "Sync the new quota and reset period to active subscribers. Used quota is kept.",
+    "Will be removed": "Will be removed",
+    "Draft": "Draft",
+    "Apply changes to existing subscriptions": "Apply changes to existing subscriptions"
   }
 }

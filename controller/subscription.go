@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -134,7 +135,8 @@ func AdminListSubscriptionPlans(c *gin.Context) {
 }
 
 type AdminUpsertSubscriptionPlanRequest struct {
-	Plan model.SubscriptionPlan `json:"plan"`
+	Plan            model.SubscriptionPlan `json:"plan"`
+	ApplyToExisting *bool                  `json:"apply_to_existing"`
 }
 
 func AdminCreateSubscriptionPlan(c *gin.Context) {
@@ -278,8 +280,16 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		return
 	}
 
+	var syncResult *model.SubscriptionPlanSyncResult
 	err := model.DB.Transaction(func(tx *gorm.DB) error {
 		// update plan (allow zero values updates with map)
+		var existingPlan model.SubscriptionPlan
+		if err := tx.Select("id").Where("id = ?", id).First(&existingPlan).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("套餐不存在")
+			}
+			return err
+		}
 		updateMap := map[string]any{
 			"title":                      req.Plan.Title,
 			"subtitle":                   req.Plan.Subtitle,
@@ -310,6 +320,18 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		if err := tx.Model(&model.SubscriptionPlan{}).Where("id = ?", id).Updates(updateMap).Error; err != nil {
 			return err
 		}
+		// Apply plan changes to existing active subscribers when requested.
+		// amount_used is preserved (clamped down if the new total is smaller),
+		// and next_reset_time is recomputed from the new reset period.
+		if req.ApplyToExisting != nil && *req.ApplyToExisting {
+			syncedPlan := req.Plan
+			syncedPlan.Id = id
+			res, syncErr := model.SyncPlanSubscriptionsTx(tx, &syncedPlan, common.GetTimestamp())
+			if syncErr != nil {
+				return syncErr
+			}
+			syncResult = res
+		}
 		return nil
 	})
 	if err != nil {
@@ -317,6 +339,10 @@ func AdminUpdateSubscriptionPlan(c *gin.Context) {
 		return
 	}
 	model.InvalidateSubscriptionPlanCache(id)
+	if syncResult != nil {
+		common.ApiSuccess(c, syncResult)
+		return
+	}
 	common.ApiSuccess(c, nil)
 }
 

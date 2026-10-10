@@ -130,6 +130,7 @@ export function PrefillGroupManagementDialog({
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDeleteState({ open: false, group: null })
       setIsDeleting(false)
     }

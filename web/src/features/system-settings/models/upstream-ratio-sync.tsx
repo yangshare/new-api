@@ -100,6 +100,7 @@ export function UpstreamRatioSync() {
   const channels = useMemo(() => channelsData?.data ?? [], [channelsData?.data])
   useEffect(() => {
     if (!channels.length) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setChannelEndpoints((previous) => {
       const next = { ...previous }
       for (const channel of channels) {

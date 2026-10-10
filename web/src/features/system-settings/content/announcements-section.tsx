@@ -160,6 +160,7 @@ export function AnnouncementsSection({
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnnouncements(
           parsed.map((item, idx) => ({
             ...item,
@@ -173,6 +174,7 @@ export function AnnouncementsSection({
   }, [data])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 
@@ -446,7 +448,7 @@ export function AnnouncementsSection({
         description={t(
           'Create or update system announcements for the dashboard'
         )}
-        contentClassName='max-w-2xl'
+        contentClassName='sm:max-w-2xl'
         contentHeight='auto'
         bodyClassName='space-y-4'
         footer={

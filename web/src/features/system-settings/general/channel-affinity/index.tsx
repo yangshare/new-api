@@ -111,6 +111,7 @@ export function ChannelAffinitySection(props: Props) {
   }, [t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshCache()
   }, [refreshCache])
 

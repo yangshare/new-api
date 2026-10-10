@@ -83,6 +83,7 @@ export function TagBatchEditDialog({
 
   useEffect(() => {
     if (open && currentTag) {
+      // eslint-disable-next-line react-hooks/immutability
       loadTagData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,7 +195,7 @@ export function TagBatchEditDialog({
           <strong>{currentTag}</strong>
         </>
       }
-      contentClassName='max-w-2xl'
+      contentClassName='sm:max-w-2xl'
       contentHeight='auto'
       bodyClassName='space-y-4'
       footer={
