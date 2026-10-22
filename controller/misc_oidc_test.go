@@ -58,3 +58,49 @@ func TestGetStatusReturnsEffectiveOIDCDisplayName(t *testing.T) {
 		})
 	}
 }
+
+func TestSendEmailVerificationRejectsWhenRegistrationDisabled(t *testing.T) {
+	tests := []struct {
+		name                    string
+		registerEnabled         bool
+		passwordRegisterEnabled bool
+		wantMessage             string
+	}{
+		{
+			name:            "registration disabled",
+			registerEnabled: false, passwordRegisterEnabled: true,
+			wantMessage: "New user registration has been disabled by administrator",
+		},
+		{
+			name:            "password registration disabled",
+			registerEnabled: true, passwordRegisterEnabled: false,
+			wantMessage: "Password registration has been disabled by administrator, please use third-party account verification",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			previousRegister := common.RegisterEnabled
+			previousPasswordRegister := common.PasswordRegisterEnabled
+			t.Cleanup(func() {
+				common.RegisterEnabled = previousRegister
+				common.PasswordRegisterEnabled = previousPasswordRegister
+			})
+			common.RegisterEnabled = tt.registerEnabled
+			common.PasswordRegisterEnabled = tt.passwordRegisterEnabled
+
+			response := httptest.NewRecorder()
+			context, _ := gin.CreateTestContext(response)
+			context.Request = httptest.NewRequest(http.MethodGet, "/api/verification?email=new-user@example.com", nil)
+
+			SendEmailVerification(context)
+
+			var payload struct {
+				Success bool   `json:"success"`
+				Message string `json:"message"`
+			}
+			require.NoError(t, common.Unmarshal(response.Body.Bytes(), &payload))
+			require.False(t, payload.Success)
+			assert.Equal(t, tt.wantMessage, payload.Message)
+		})
+	}
+}
