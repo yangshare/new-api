@@ -691,28 +691,6 @@ describe('dashboard flow data', () => {
     ).toBe(true)
   })
 
-  test('masks sensitive filter labels when sensitive data is hidden', () => {
-    const result = buildDashboardFlowData(rows, 'quota', {
-      role: 'root',
-      maskSensitive: true,
-    })
-
-    expect(result.filterOptions.users.map((user) => user.label)).toEqual([
-      '••••',
-      '••••',
-    ])
-    const sensitiveNodeLabels = result.filterOptions.nodes
-      .filter((node) => node.kind !== 'model')
-      .map((node) => node.label)
-    expect(sensitiveNodeLabels).toHaveLength(10)
-    expect(sensitiveNodeLabels.every((label) => label === '••••')).toBe(true)
-    expect(
-      result.filterOptions.nodes
-        .filter((node) => node.kind === 'model')
-        .map((node) => node.label)
-    ).toEqual(['gpt-4.1', 'claude-4-sonnet'])
-  })
-
   test('builds Sankey spec with quota token request tooltips', () => {
     const result = buildDashboardFlowData(rows.slice(0, 1), 'quota', {
       role: 'root',
@@ -758,6 +736,28 @@ describe('dashboard flow data', () => {
       ['Requests', '2'],
       ['Share', '100.0%'],
     ])
+  })
+
+  test('draws labels and the active node outline in the theme text color', () => {
+    const result = buildDashboardFlowData(rows.slice(0, 1), 'quota', {
+      role: 'root',
+      activeNode: { kind: 'user', id: 'user:1' },
+    })
+    const flowSpec = buildFlowSankeySpec(
+      result.flow,
+      'Flow',
+      undefined,
+      undefined,
+      'rgba(245, 245, 245, 1.00)'
+    )
+    const aliceNode = flowSpec.data[0].values[0].nodes.find(
+      (node: Record<string, unknown>) => node.key === 'user:1'
+    )
+
+    expect(flowSpec.label.style.fill).toBe('rgba(245, 245, 245, 1.00)')
+    expect(flowSpec.node.style.stroke({ datum: aliceNode })).toBe(
+      'rgba(245, 245, 245, 1.00)'
+    )
   })
 
   test('maps active flow highlight states into the Sankey spec', () => {

@@ -123,6 +123,10 @@ func GetStatus(c *gin.Context) {
 		"user_agreement_enabled":      legalSetting.UserAgreement != "",
 		"privacy_policy_enabled":      legalSetting.PrivacyPolicy != "",
 		"checkin_enabled":             operation_setting.GetCheckinSetting().Enabled,
+		"log_export_enabled":          operation_setting.GetLogSetting().UserExportEnabled,
+		"log_max_range_days":          operation_setting.GetLogSetting().MaxRangeDays,
+		"quota_remind_enabled":        common.QuotaRemindEnabled,
+		"quota_remind_threshold":      common.QuotaRemindThreshold,
 	}
 
 	// 根据启用状态注入可选内容
@@ -213,14 +217,6 @@ func GetHomePageContent(c *gin.Context) {
 }
 
 func SendEmailVerification(c *gin.Context) {
-	if !common.RegisterEnabled {
-		common.ApiErrorT(c, "New user registration has been disabled by administrator")
-		return
-	}
-	if !common.PasswordRegisterEnabled {
-		common.ApiErrorT(c, "Password registration has been disabled by administrator, please use third-party account verification")
-		return
-	}
 	email, err := service.ValidateAccountEmail(c.Query("email"))
 	if err != nil {
 		writeSecurityOperationError(c, err)

@@ -30,8 +30,10 @@ import {
   getPriceSummary,
   type ModelRow,
 } from './model-pricing-snapshots'
+import { PRICING_ISSUE_REASONS, type ModelPricingIssue } from './pricing-issues'
 
 export const TASK_PRICING_MODE_FILTER = 'tiered_expr_task'
+export const PRICE_ATTENTION_FILTER = 'needs-attention'
 
 const filterBySelectedValues = (
   rowValue: unknown,
@@ -46,7 +48,9 @@ type BuildModelRatioColumnsOptions = {
   onEdit: (model: ModelRow) => void
   deleteDisabled?: boolean
   taskModelNames?: Set<string>
-  t: (key: string) => string
+  /** Task model prices the gateway reports a plugin cannot charge, by model. */
+  pricingIssues?: Map<string, ModelPricingIssue[]>
+  t: (key: string, options?: Record<string, unknown>) => string
 }
 
 export function buildModelRatioColumns({
@@ -54,6 +58,7 @@ export function buildModelRatioColumns({
   onEdit,
   deleteDisabled,
   taskModelNames,
+  pricingIssues,
   t,
 }: BuildModelRatioColumnsOptions): ColumnDef<ModelRow>[] {
   return [
@@ -86,61 +91,75 @@ export function buildModelRatioColumns({
         <DataTableColumnHeader column={column} title={t('Model name')} />
       ),
       cell: ({ row }) => {
+        const issues = pricingIssues?.get(row.original.name)
         const isTaskModel = Boolean(taskModelNames?.has(row.original.name))
         const hasConfiguredTaskPricing =
           row.original.billingMode === 'tiered_expr' &&
           Boolean(row.original.billingExpr)
-        const showTaskPricingBadge = isTaskModel && hasConfiguredTaskPricing
+        // A price that needs attention must not look configured.
+        const showTaskPricingBadge =
+          !issues && isTaskModel && hasConfiguredTaskPricing
         const showTieredBadge =
-          row.original.billingMode === 'tiered_expr' && !isTaskModel
-        const showUnconfiguredTaskBadge = isTaskModel && !hasConfiguredTaskPricing
+          !issues && row.original.billingMode === 'tiered_expr' && !isTaskModel
+        const issueText = issues
+          ?.map((issue) =>
+            t('{{name}}: {{reason}}', {
+              name: issue.plugin_name,
+              reason: t(PRICING_ISSUE_REASONS[issue.reason]),
+            })
+          )
+          .join(' · ')
 
         return (
-          <div className='flex min-w-0 items-center gap-2 font-medium'>
-            <span className='min-w-0 truncate'>{row.getValue('name')}</span>
-            {row.original.isDraftChanged && (
-              <StatusBadge
-                label={t('Draft')}
-                variant={row.original.isDraftDeleted ? 'danger' : 'warning'}
-                copyable={false}
-                className='shrink-0'
-              />
-            )}
-            {showTieredBadge ? (
-              <StatusBadge
-                label={t('Tiered')}
-                variant='info'
-                copyable={false}
-                className='shrink-0'
-              />
-            ) : null}
-            {showTaskPricingBadge ? (
-              <StatusBadge
-                label={t('Task pricing')}
-                variant='info'
-                copyable={false}
-                className='shrink-0'
-              />
-            ) : null}
-            {row.original.hasConflict && (
-              <StatusBadge
-                label={t('Conflict')}
-                variant='danger'
-                copyable={false}
-                className='shrink-0'
-              />
-            )}
-            {showUnconfiguredTaskBadge ? (
-              <StatusBadge
-                label={t('Task pricing not configured')}
-                variant='warning'
-                copyable={false}
-                className='shrink-0'
-              />
+          <div className='flex min-w-0 flex-col gap-0.5'>
+            <div className='flex min-w-0 items-center gap-2 font-medium'>
+              <span className='min-w-0 truncate'>{row.getValue('name')}</span>
+              {showTieredBadge ? (
+                <StatusBadge
+                  label={t('Tiered')}
+                  variant='info'
+                  copyable={false}
+                  className='shrink-0'
+                />
+              ) : null}
+              {showTaskPricingBadge ? (
+                <StatusBadge
+                  label={t('Task pricing')}
+                  variant='info'
+                  copyable={false}
+                  className='shrink-0'
+                />
+              ) : null}
+              {row.original.hasConflict && (
+                <StatusBadge
+                  label={t('Conflict')}
+                  variant='danger'
+                  copyable={false}
+                  className='shrink-0'
+                />
+              )}
+              {issues ? (
+                <StatusBadge
+                  label={t('Price needs attention')}
+                  variant='warning'
+                  copyable={false}
+                  className='shrink-0'
+                />
+              ) : null}
+            </div>
+            {issueText ? (
+              <span
+                className='text-muted-foreground truncate text-xs'
+                title={issueText}
+              >
+                {issueText}
+              </span>
             ) : null}
           </div>
         )
       },
+      // The only option is PRICE_ATTENTION_FILTER.
+      filterFn: (row) => Boolean(pricingIssues?.has(row.original.name)),
       enableHiding: false,
     },
     {
@@ -159,7 +178,10 @@ export function buildModelRatioColumns({
       ),
       filterFn: (row, id, value) => {
         if (filterBySelectedValues(row.getValue(id), value)) return true
-        if (!Array.isArray(value) || !value.includes(TASK_PRICING_MODE_FILTER)) {
+        if (
+          !Array.isArray(value) ||
+          !value.includes(TASK_PRICING_MODE_FILTER)
+        ) {
           return false
         }
         return (
@@ -183,28 +205,6 @@ export function buildModelRatioColumns({
           <span className='text-muted-foreground truncate text-xs'>
             {getPriceDetail(row.original, t)}
           </span>
-          {row.original.isDraftChanged && (
-            <div className='border-warning/45 bg-warning/10 text-foreground mt-1 flex max-w-[360px] flex-col gap-1 rounded-md border px-2.5 py-2 shadow-sm'>
-              <div className='flex items-center gap-2'>
-                <StatusBadge
-                  label={t('Draft')}
-                  variant={row.original.isDraftDeleted ? 'danger' : 'warning'}
-                  copyable={false}
-                  className='bg-background/70 shrink-0'
-                />
-                <span className='truncate text-sm font-medium'>
-                  {row.original.isDraftDeleted
-                    ? t('Will be removed')
-                    : getPriceSummary(row.original.draft ?? row.original, t)}
-                </span>
-              </div>
-              {!row.original.isDraftDeleted && row.original.draft && (
-                <span className='text-muted-foreground truncate text-xs'>
-                  {getPriceDetail(row.original.draft, t)}
-                </span>
-              )}
-            </div>
-          )}
         </div>
       ),
       sortingFn: (rowA, rowB) =>

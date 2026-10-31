@@ -60,7 +60,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { toIntlLocale } from '@/i18n/languages'
 import dayjs from '@/lib/dayjs'
+import { formatTimestampRelative } from '@/lib/format'
 import { handleServerError } from '@/lib/handle-server-error'
 
 import { SettingsSwitchField } from '../components/settings-form-layout'
@@ -134,7 +136,8 @@ export function AnnouncementsSection({
   enabled,
   data,
 }: AnnouncementsSectionProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const updateOption = useUpdateOption()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isEnabled, setIsEnabled] = useState(enabled)
@@ -160,7 +163,6 @@ export function AnnouncementsSection({
     try {
       const parsed = JSON.parse(data || '[]')
       if (Array.isArray(parsed)) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnnouncements(
           parsed.map((item, idx) => ({
             ...item,
@@ -174,7 +176,6 @@ export function AnnouncementsSection({
   }, [data])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsEnabled(enabled)
   }, [enabled])
 
@@ -299,19 +300,6 @@ export function AnnouncementsSection({
     })
   }, [announcements])
 
-  const getRelativeTime = (date: string) => {
-    const now = new Date()
-    const past = new Date(date)
-    const diffMs = now.getTime() - past.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    return `${diffDays}d ago`
-  }
-
   return (
     <SettingsSection title={t('Announcements')}>
       <div className='space-y-4'>
@@ -389,7 +377,11 @@ export function AnnouncementsSection({
               cell: (announcement) => (
                 <div className='flex flex-col gap-1'>
                   <span className='text-sm font-medium'>
-                    {getRelativeTime(announcement.publishDate)}
+                    {formatTimestampRelative(
+                      new Date(announcement.publishDate).getTime(),
+                      'milliseconds',
+                      locale
+                    )}
                   </span>
                   <span className='text-muted-foreground text-xs'>
                     {dayjs(announcement.publishDate).format(
@@ -448,7 +440,7 @@ export function AnnouncementsSection({
         description={t(
           'Create or update system announcements for the dashboard'
         )}
-        contentClassName='sm:max-w-2xl'
+        contentClassName='max-w-2xl'
         contentHeight='auto'
         bodyClassName='space-y-4'
         footer={

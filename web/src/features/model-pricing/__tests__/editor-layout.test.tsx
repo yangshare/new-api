@@ -59,7 +59,7 @@ afterEach(() => {
   }
 })
 
-it.each(['none', 'standard', 'claude_ttl'] as const)(
+it.each(['none', 'standard', 'claude_ttl', 'openai_ttl'] as const)(
   'uses the %s cache profile consistently in current billing and draft previews',
   async (mode) => {
     const cacheWriteMode = mode
@@ -134,11 +134,15 @@ it.each(['none', 'standard', 'claude_ttl'] as const)(
         expect(
           within(panel).queryByText('Cache create (1h) price')
         ).not.toBeInTheDocument()
-      } else {
         expect(
-          within(panel).getByText(
-            mode === 'claude_ttl' ? 'Cache Creation (5m)' : 'Cache write price'
-          ).nextElementSibling
+          within(panel).queryByText('Cache create (12h) price')
+        ).not.toBeInTheDocument()
+      } else {
+        let writeLabel = 'Cache write price'
+        if (mode === 'claude_ttl') writeLabel = 'Cache Creation (5m)'
+        if (mode === 'openai_ttl') writeLabel = 'Cache Creation (30m)'
+        expect(
+          within(panel).getByText(writeLabel).nextElementSibling
         ).toHaveTextContent('$5')
         if (mode === 'claude_ttl') {
           expect(
@@ -148,6 +152,16 @@ it.each(['none', 'standard', 'claude_ttl'] as const)(
         } else {
           expect(
             within(panel).queryByText('Cache create (1h) price')
+          ).not.toBeInTheDocument()
+        }
+        if (mode === 'openai_ttl') {
+          expect(
+            within(panel).getByText('Cache create (12h) price')
+              .nextElementSibling
+          ).toHaveTextContent('$10')
+        } else {
+          expect(
+            within(panel).queryByText('Cache create (12h) price')
           ).not.toBeInTheDocument()
         }
       }
@@ -271,9 +285,12 @@ it('updates the preview for explicit zero and disabled prices and explains depen
   expect(audio).not.toHaveAttribute('aria-disabled', 'true')
 })
 
-function PricingFormFixture(props: { onSave: () => Promise<void> }) {
+function PricingFormFixture(props: {
+  variant: 'default' | 'unset'
+  onSave: () => Promise<void>
+}) {
   const values = {
-    ModelPrice: '{"example-model":0.1}',
+    ModelPrice: props.variant === 'default' ? '{"example-model":0.1}' : '{}',
     ModelRatio: '{}',
     CacheRatio: '{}',
     CreateCacheRatio: '{}',
@@ -298,6 +315,7 @@ function PricingFormFixture(props: { onSave: () => Promise<void> }) {
         <ModelRatioForm
           form={form}
           savedValues={values}
+          variant={props.variant}
           onSave={props.onSave}
           onReset={() => undefined}
           isSaving={false}
@@ -308,15 +326,15 @@ function PricingFormFixture(props: { onSave: () => Promise<void> }) {
   )
 }
 
-it(
-  'keeps the pricing workspace shrinkable and saves from its fixed action bar',
-  async () => {
+it.each(['default', 'unset'] as const)(
+  'keeps the %s pricing workspace shrinkable and saves from its fixed action bar',
+  async (variant) => {
     const user = userEvent.setup()
     const save = vi.fn(async () => undefined)
-    vi.spyOn(api, 'get').mockImplementation(async () => ({
+    vi.spyOn(api, 'get').mockImplementation(async (url) => ({
       data: {
         success: true,
-        data: [],
+        data: url === '/api/channel/models_enabled' ? ['example-model'] : [],
         vendors: [],
       },
     }))
@@ -327,7 +345,7 @@ it(
     clients.push(client)
     render(
       <QueryClientProvider client={client}>
-        <PricingFormFixture onSave={save} />
+        <PricingFormFixture variant={variant} onSave={save} />
       </QueryClientProvider>
     )
     const workspace = screen.getByRole('region', { name: 'Model prices' })
@@ -337,34 +355,40 @@ it(
       'grid-rows-[minmax(0,1fr)]'
     )
     await waitFor(() => expect(client.isFetching()).toBe(0))
-    const toggle = screen.getByRole('switch', { name: 'Expose ratio API' })
-    expect(screen.getByRole('banner')).toContainElement(toggle)
-    const help = within(screen.getByRole('banner')).getByRole('button', {
-      name: 'Learn more',
-    })
-    await user.click(help)
-    expect(screen.getByRole('dialog')).toHaveTextContent(
-      'Allow clients to query configured prices via `/api/ratio`.'
-    )
-    expect(toggle).not.toBeChecked()
-    await user.keyboard('{Escape}')
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    )
-    expect(help).toHaveFocus()
-    expect(toggle).toHaveAccessibleDescription(
-      'Allow clients to query configured prices via `/api/ratio`.'
-    )
-    await user.click(toggle)
-    expect(toggle).toBeChecked()
-    await user.click(screen.getByRole('button', { name: 'Switch to JSON' }))
-    expect(
-      screen.getAllByRole('switch', { name: 'Expose ratio API' })
-    ).toHaveLength(1)
-    expect(
-      screen.getByRole('switch', { name: 'Expose ratio API' })
-    ).toBeChecked()
-    await user.click(screen.getByRole('button', { name: 'Switch to Visual' }))
+    if (variant === 'default') {
+      const toggle = screen.getByRole('switch', { name: 'Expose ratio API' })
+      expect(screen.getByRole('banner')).toContainElement(toggle)
+      const help = within(screen.getByRole('banner')).getByRole('button', {
+        name: 'Learn more',
+      })
+      await user.click(help)
+      expect(screen.getByRole('dialog')).toHaveTextContent(
+        'Allow clients to query configured prices via `/api/ratio`.'
+      )
+      expect(toggle).not.toBeChecked()
+      await user.keyboard('{Escape}')
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      )
+      expect(help).toHaveFocus()
+      expect(toggle).toHaveAccessibleDescription(
+        'Allow clients to query configured prices via `/api/ratio`.'
+      )
+      await user.click(toggle)
+      expect(toggle).toBeChecked()
+      await user.click(screen.getByRole('button', { name: 'Switch to JSON' }))
+      expect(
+        screen.getAllByRole('switch', { name: 'Expose ratio API' })
+      ).toHaveLength(1)
+      expect(
+        screen.getByRole('switch', { name: 'Expose ratio API' })
+      ).toBeChecked()
+      await user.click(screen.getByRole('button', { name: 'Switch to Visual' }))
+    } else {
+      expect(
+        screen.queryByRole('switch', { name: 'Expose ratio API' })
+      ).not.toBeInTheDocument()
+    }
     await user.click(await screen.findByRole('button', { name: 'Edit' }))
     await user.click(
       screen.getByRole('tab', { name: 'Per-request (deprecated)' })
@@ -379,7 +403,7 @@ it(
     await user.click(button)
     await waitFor(() => expect(save).toHaveBeenCalledOnce())
     expect(save).toHaveBeenCalledWith(
-      expect.objectContaining({ ExposeRatioEnabled: true }),
+      expect.objectContaining({ ExposeRatioEnabled: variant === 'default' }),
       undefined
     )
   }

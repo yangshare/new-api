@@ -125,7 +125,6 @@ export function UserAuthForm({
 
   useEffect(() => {
     if (requiresLegalConsent) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAgreedToLegal(false)
     } else {
       setAgreedToLegal(true)
@@ -400,7 +399,7 @@ export function UserAuthForm({
             <Button
               type='submit'
               className='mt-2 w-full justify-center gap-2'
-              disabled={isLoading || (requiresLegalConsent && !agreedToLegal)}
+              disabled={isLoading}
             >
               {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
               {t('Sign in')}

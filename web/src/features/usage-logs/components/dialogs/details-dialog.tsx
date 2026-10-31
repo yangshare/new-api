@@ -82,7 +82,6 @@ import {
   getReasoningEffortVariant,
   logTokenName,
   renderAuditContent,
-  getMultiKeyIndex,
   renderLogContent,
 } from '../../lib/format'
 import { buildQuotaAuditOperation } from '../../lib/quota-audit-operation'
@@ -175,6 +174,8 @@ function BillingBreakdown(props: {
   const { log, other, isAdmin } = props
   const isPerCall = isPerCallBilling(other.model_price)
   const isClaude = other.claude === true
+  // OpenAI 12-hour cache writes have their own price, listed like Claude's.
+  const hasCacheWrite12h = (other.cache_creation_tokens_12h || 0) > 0
   const isTieredExpr = other.billing_mode === 'tiered_expr'
   const tieredSummary = getTieredBillingSummary(other)
 
@@ -241,7 +242,11 @@ function BillingBreakdown(props: {
     })
   }
 
-  if (!isTieredExpr && isClaude && hasAnyCacheTokens(other)) {
+  if (
+    !isTieredExpr &&
+    (isClaude || hasCacheWrite12h) &&
+    hasAnyCacheTokens(other)
+  ) {
     if (other.cache_ratio != null && other.cache_ratio !== 1) {
       rows.push({
         label: t('Cache Read'),
@@ -253,7 +258,9 @@ function BillingBreakdown(props: {
       other.cache_creation_ratio !== 1
     ) {
       rows.push({
-        label: t('Cache Creation'),
+        label: hasCacheWrite12h
+          ? t('Cache Creation (30m)')
+          : t('Cache Creation'),
         value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio)}/M`,
       })
     }
@@ -273,6 +280,15 @@ function BillingBreakdown(props: {
       rows.push({
         label: t('Cache Creation (1h)'),
         value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio_1h)}/M`,
+      })
+    }
+    if (
+      other.cache_creation_ratio_12h != null &&
+      other.cache_creation_ratio_12h !== 0
+    ) {
+      rows.push({
+        label: t('Cache Creation (12h)'),
+        value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio_12h)}/M`,
       })
     }
   }
@@ -384,6 +400,10 @@ function TokenBreakdown(props: { log: UsageLog; other: LogOtherData }) {
   const cacheWrite = other.cache_creation_tokens || 0
   const cacheWrite5m = other.cache_creation_tokens_5m || 0
   const cacheWrite1h = other.cache_creation_tokens_1h || 0
+  const cacheWrite12h = other.cache_creation_tokens_12h || 0
+  // cache_creation_tokens counts OpenAI 30-minute and 12-hour writes together.
+  const cacheWrite30m =
+    cacheWrite12h > 0 ? Math.max(cacheWrite - cacheWrite12h, 0) : 0
   const hasTokens = promptTokens > 0 || completionTokens > 0
 
   if (!hasTokens) return null
@@ -410,7 +430,12 @@ function TokenBreakdown(props: { log: UsageLog; other: LogOtherData }) {
     })
   }
 
-  if (cacheWrite > 0 && cacheWrite5m === 0 && cacheWrite1h === 0) {
+  if (
+    cacheWrite > 0 &&
+    cacheWrite5m === 0 &&
+    cacheWrite1h === 0 &&
+    cacheWrite12h === 0
+  ) {
     rows.push({
       label: t('Cache Write'),
       value: cacheWrite.toLocaleString(),
@@ -428,6 +453,20 @@ function TokenBreakdown(props: { log: UsageLog; other: LogOtherData }) {
     rows.push({
       label: t('Cache Write (1h)'),
       value: cacheWrite1h.toLocaleString(),
+    })
+  }
+
+  if (cacheWrite30m > 0) {
+    rows.push({
+      label: t('Cache Write (30m)'),
+      value: cacheWrite30m.toLocaleString(),
+    })
+  }
+
+  if (cacheWrite12h > 0) {
+    rows.push({
+      label: t('Cache Write (12h)'),
+      value: cacheWrite12h.toLocaleString(),
     })
   }
 
@@ -482,12 +521,6 @@ export function DetailsDialog(props: DetailsDialogProps) {
   const { t } = useTranslation()
   const { copiedText, copyToClipboard } = useCopyToClipboard({ notify: false })
   const other = parseLogOther(props.log.other)
-  const multiKeyIndex = getMultiKeyIndex(other)
-  const multiKeyLabel = multiKeyIndex === null ? null : `K${multiKeyIndex}`
-  const multiKeyTitle =
-    multiKeyIndex === null
-      ? undefined
-      : `${t('Key')} ${t('Index')}: ${multiKeyIndex}`
   const typeConfig = getLogTypeConfig(props.log.type)
 
   const isViolation = isViolationFeeLog(other)
@@ -683,25 +716,13 @@ export function DetailsDialog(props: DetailsDialogProps) {
             <DetailRow
               label={t('Channel')}
               value={
-                <span className='inline-flex flex-wrap items-center gap-1'>
-                  <span>{props.log.channel}</span>
+                <span>
+                  {props.log.channel}
                   {props.log.channel_name && (
                     <span className='text-muted-foreground'>
                       {' '}
                       ({props.log.channel_name})
                     </span>
-                  )}
-                  {multiKeyLabel && (
-                    <StatusBadge
-                      label={multiKeyLabel}
-                      variant='neutral'
-                      size='sm'
-                      showDot={false}
-                      copyable={false}
-                      title={multiKeyTitle}
-                      aria-label={multiKeyTitle}
-                      className='border-border/60 bg-muted/40 font-mono'
-                    />
                   )}
                 </span>
               }

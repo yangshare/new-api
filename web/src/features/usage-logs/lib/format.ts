@@ -190,29 +190,6 @@ export function getReasoningEffortVariant(
 }
 
 /**
- * Extract the selected multi-key index from parsed log metadata.
- *
- * The value is a key-list index, not a database ID or secret key content.
- */
-export function getMultiKeyIndex(
-  other: LogOtherData | null | undefined
-): number | null {
-  if (other?.admin_info?.is_multi_key !== true) return null
-
-  const index = other.admin_info.multi_key_index
-  if (
-    typeof index !== 'number' ||
-    !Number.isFinite(index) ||
-    !Number.isInteger(index) ||
-    index < 0
-  ) {
-    return null
-  }
-
-  return index
-}
-
-/**
  * Get time color based on duration (in seconds)
  */
 export function getTimeColor(
@@ -360,7 +337,8 @@ export function hasAnyCacheTokens(
     (other.image_cache_tokens || 0) > 0 ||
     (other.cache_creation_tokens || 0) > 0 ||
     (other.cache_creation_tokens_5m || 0) > 0 ||
-    (other.cache_creation_tokens_1h || 0) > 0
+    (other.cache_creation_tokens_1h || 0) > 0 ||
+    (other.cache_creation_tokens_12h || 0) > 0
   )
 }
 
