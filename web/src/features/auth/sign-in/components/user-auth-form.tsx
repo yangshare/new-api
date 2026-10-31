@@ -125,6 +125,7 @@ export function UserAuthForm({
 
   useEffect(() => {
     if (requiresLegalConsent) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAgreedToLegal(false)
     } else {
       setAgreedToLegal(true)

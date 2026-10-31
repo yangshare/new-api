@@ -29,9 +29,10 @@
 ## 验证门槛（第 5 步之后、每轮收尾 commit 之前，按序全过）
 
 1. `go build ./...`（退出码 0）
-2. `go test ./common/... ./pkg/billingexpr/... ./relay/common/... ./setting/ratio_setting/... ./relay/channel/ai360/... ./service/ -run "TestObserveChannelAffinityUsageCache"`（压计费与本地适配层）
+2. `go test ./common/... ./pkg/billingexpr/... ./relay/common/... ./setting/ratio_setting/... ./relay/channel/ai360/... ./service/ -run "TestObserveChannelAffinityUsageCache"`（压计费与本地适配层；2026-10-31 轮起 affinity 测试更名为 `TestObserveChannelAffinityUsageCacheByRelayFormat_*` 三例，-run 前缀仍匹配）
 3. `go test ./model/ -run Subscription`（订阅链路）
 4. web 目录：`bun install`（上游可能新增依赖）→ `bun run typecheck` → `bun run build`
+   > 勘误（2026-10-31）：上游把 typecheck 换成 Bun 内置类型检查器 `bun check -b`（v1.4.3 新增，依赖里无 typescript）。本地 Bun < 1.4.3 时 `bun run typecheck` 报 `Script not found "check"`——先 `bun upgrade`，勿误判为上游脚本项目录错。
 5. `bun run format:check`（**只读**；禁止 `format --write`）。若失败：只对手工修复受影响行，不允许全局写回。
    > 勘误（2026-10-11）：`scripts/format-with-protected-headers.mjs` 内 `spawnSync('oxfmt', ...)` 在 Windows + node 下因不带扩展名解析而 ENOENT，脚本**静默 exit 1 无任何输出**——勿误判为格式问题。绕过：`$env:PATH = "E:\开源项目\new-api\web\node_modules\.bin;$env:PATH"` 后直接 `& node_modules\.bin\oxfmt.exe -c .oxfmtrc.json --ignore-path .gitignore --check <改动文件>`（注意 web 目录内相对路径，git status 的 `web/` 前缀要剥掉）；判定标准=无 "Format issues found in above N files" 汇总行且 exit 0。
 6. 保护文件核对：
@@ -50,43 +51,42 @@ $both         = @(git diff --name-only "$mb..$backup" | Where-Object { (git diff
 # 1) 重放过但不含任何 B 项的覆盖文件：最终态必须与 upstream/main 完全一致
 #    （含 B 项的文件在下面 $replayFiles 里列出，豁免该断言）
 $replayFiles = @(
-  'model/subscription.go'
-  'controller/subscription.go'
-  'docker-compose.yml'
-  'web/.oxlintrc.json'
-  'web/rsbuild.config.ts'
-  'web/src/lib/theme-customization.ts'
-  'web/src/context/theme-customization-provider.tsx'
-  'service/channel_affinity_usage_cache_test.go'
-  '.github/workflows/electron-build.yml'; '.github/workflows/release.yml'; '.gitignore'; 'Dockerfile'
+  '.github/workflows/electron-build.yml'; '.github/workflows/release.yml'; 'Dockerfile'
+  'controller/misc.go'; 'model/subscription.go'; 'controller/subscription.go'
+  'docker-compose.yml'; '.gitignore'; 'web/.oxlintrc.json'; 'web/rsbuild.config.ts'
+  'web/src/lib/theme-customization.ts'; 'web/src/context/theme-customization-provider.tsx'
   'web/src/i18n/locales/en.json'; 'web/src/i18n/locales/fr.json'; 'web/src/i18n/locales/ja.json'
   'web/src/i18n/locales/ru.json'; 'web/src/i18n/locales/vi.json'; 'web/src/i18n/locales/zh-TW.json'; 'web/src/i18n/locales/zh.json'
-  'web/src/features/auth/sign-in/components/user-auth-form.tsx'
-  'web/src/features/auth/hooks/use-oauth-login.ts'
-  'web/src/features/channels/components/dialogs/balance-query-dialog.tsx'
-  'web/src/features/channels/components/dialogs/fetch-models-dialog.tsx'
-  'web/src/features/channels/components/dialogs/edit-tag-dialog.tsx'
-  'web/src/features/channels/components/dialogs/multi-key-manage-dialog.tsx'
-  'web/src/features/channels/components/dialogs/ollama-models-dialog.tsx'
-  'web/src/features/channels/components/dialogs/param-override-editor-dialog.tsx'
-  'web/src/features/channels/components/dialogs/tag-batch-edit-dialog.tsx'
-  'web/src/features/channels/components/model-mapping-editor.tsx'
-  'web/src/features/dashboard/lib/flow.test.ts'
-  'web/src/features/models/components/drawers/model-mutate-drawer.tsx'
-  'web/src/features/system-settings/auth/oauth-section.tsx'
+  'web/src/components/datetime-picker.tsx'
+  'web/src/features/dashboard/lib/flow.ts'; 'web/src/features/dashboard/lib/flow.test.ts'
+  'web/src/features/model-pricing/__tests__/editor-layout.test.tsx'
   'web/src/features/system-settings/billing/section-registry.tsx'
-  'web/src/features/system-settings/models/ratio-settings-card.tsx'
   'web/src/features/system-settings/models/model-ratio-form.tsx'
+  'web/src/features/system-settings/models/ratio-settings-card.tsx'
   'web/src/features/system-settings/models/model-ratio-table-columns.tsx'
-  'web/src/features/system-settings/models/upstream-ratio-sync.tsx'
-  'web/src/features/system-settings/general/channel-affinity/index.tsx'
-  'web/src/features/subscriptions/components/subscriptions-mutate-drawer.tsx'
+  'web/src/features/usage-logs/lib/format.ts'
   'web/src/features/usage-logs/components/dialogs/details-dialog.tsx'
   'web/src/features/usage-logs/components/columns/common-logs-columns.tsx'
-  'web/src/features/usage-logs/lib/format.ts'
-  'web/src/features/users/components/dialogs/user-binding-dialog.tsx'
-  'web/src/features/users/components/users-table.tsx'
+  'web/src/features/subscriptions/components/subscriptions-mutate-drawer.tsx'
+  'web/src/features/auth/sign-in/components/user-auth-form.tsx'; 'web/src/features/auth/hooks/use-oauth-login.ts'
+  'web/src/features/channels/components/dialogs/balance-query-dialog.tsx'; 'web/src/features/channels/components/dialogs/fetch-models-dialog.tsx'
+  'web/src/features/channels/components/dialogs/edit-tag-dialog.tsx'; 'web/src/features/channels/components/dialogs/multi-key-manage-dialog.tsx'
+  'web/src/features/channels/components/dialogs/ollama-models-dialog.tsx'; 'web/src/features/channels/components/dialogs/param-override-editor-dialog.tsx'
+  'web/src/features/channels/components/dialogs/tag-batch-edit-dialog.tsx'; 'web/src/features/channels/components/model-mapping-editor.tsx'
+  'web/src/features/models/components/dialogs/extend-deployment-dialog.tsx'; 'web/src/features/models/components/dialogs/missing-models-dialog.tsx'
+  'web/src/features/models/components/dialogs/prefill-group-management-dialog.tsx'; 'web/src/features/models/components/dialogs/rename-deployment-dialog.tsx'
+  'web/src/features/profile/components/checkin-calendar-card.tsx'; 'web/src/features/profile/components/language-preferences-card.tsx'
+  'web/src/features/profile/components/sidebar-modules-card.tsx'; 'web/src/features/profile/components/tabs/notification-tab.tsx'
+  'web/src/features/profile/hooks/use-profile.ts'
+  'web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx'; 'web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx'
+  'web/src/features/system-settings/auth/oauth-section.tsx'; 'web/src/features/system-settings/content/announcements-section.tsx'
+  'web/src/features/system-settings/content/faq-section.tsx'; 'web/src/features/system-settings/content/uptime-kuma-section.tsx'
+  'web/src/features/system-settings/general/channel-affinity/index.tsx'; 'web/src/features/system-settings/models/claude-settings-card.tsx'
+  'web/src/features/system-settings/models/upstream-ratio-sync.tsx'
+  'web/src/features/users/components/dialogs/user-binding-dialog.tsx'; 'web/src/features/users/components/users-table.tsx'
+  'web/src/features/wallet/components/subscription-plans-card.tsx'; 'web/src/features/wallet/hooks/use-affiliate.ts'
   'web/src/features/wallet/hooks/use-billing-history.ts'
+  'web/src/features/task-plugins/components/marketplace-sources-dialog.tsx'
 )
 foreach ($f in $both) {
   if ($replayFiles -notcontains $f) {
@@ -273,17 +273,9 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 上游侧确认（2026-10 轮）：其实现的依赖 `calcNextResetTime`、`lockForUpdate`、`UserSubscription.AmountTotal/AmountUsed/NextResetTime/LastResetTime` 均仍在上游文件中。
 调用方 `controller/subscription.go`（2026-10 轮上游也动了该文件，已手工融合：`errors` import、`ApplyToExisting` 字段、事务内存在性检查 + 同步块、`syncResult` 响应分支——以 `dev-backup-pre-sync` 版 diff 为准重放）与回归测试 `model/subscription_sync_test.go` 融合说明如上；B14 是本特性的前端面。
 
-### B9 `service/channel_affinity_usage_cache_test.go` — 测试 ID uuid 化
+### B9 `service/channel_affinity_usage_cache_test.go` — 测试 ID uuid 化 — 【已退役 2026-10-31】
 
-锚点：`uniqueChannelAffinityUsageCacheTestID`。重放内容：删 `"time"` import（若无其他引用）、加 `"github.com/google/uuid"` import，以及：
-
-```go
-func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
-	return prefix + "_" + uuid.NewString()
-}
-```
-
-三个 Test 函数体内共 6 处 `fmt.Sprintf("rule_%d", time.Now().UnixNano())` 形式改为 `uniqueChannelAffinityUsageCacheTestID("rule")` / `("fp")`。背景：时间戳纳秒在并行测试下可能碰撞导致偶发失败。上游侧仍是 time 版本，故每轮都要重放。
+上游在 2026-10-31 轮重写了该测试文件：改用 `channelAffinityTestSeq atomic.Int64` 序列号生成 `affinityTestKeys(t)`，与 B9 解决同一并行碰撞问题且无 `time.Now().UnixNano` 残留。整文件取上游、不再重放；`git diff upstream/main -- <file>` 必须为空（已入锚点索引 equalsUpstream）。
 
 ### B10 杂项 lint/样式小组（逐文件单点）
 
@@ -310,7 +302,7 @@ func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
 | `web/src/features/profile/components/checkin-calendar-card.tsx` | `setCollapsed(checkedToday)` ← set-state-in-effect |
 | `web/src/features/profile/components/language-preferences-card.tsx` | `setCurrentLanguage(...)` ← set-state-in-effect |
 | `web/src/features/profile/components/sidebar-modules-card.tsx` | `loadConfig()` ← set-state-in-effect |
-| `web/src/features/profile/components/tabs/notification-tab.tsx` | `setSettings(normalizeUserSettings(profile.setting))` ← set-state-in-effect（上游重构后锚点） |
+| `web/src/features/profile/components/tabs/notification-tab.tsx` | `setSettings(next)` ← set-state-in-effect（2026-10-31 轮上游重构：先 `const next = normalizeUserSettings(profile.setting)` 再 setState，注释插在 setState 行上；上游新增的 `setThresholdInput(...)` 若 lint 报警再补） |
 | `web/src/features/profile/hooks/use-profile.ts` | `fetchProfile()` ← set-state-in-effect |
 | `web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx` | `setSelectedEpayMethod(...)` ← set-state-in-effect |
 | `web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx` | `const loadData = useCallback` ← preserve-manual-memoization；`setSelectedPlanId('')` ← set-state-in-effect |
@@ -327,6 +319,7 @@ func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
 | `web/src/features/wallet/components/subscription-plans-card.tsx` | 两处 `const now = Date.now() / 1000` ← purity 注释 |
 | `web/src/features/wallet/hooks/use-affiliate.ts` | `fetchAffiliateCode()` ← set-state-in-effect |
 | `web/src/features/wallet/hooks/use-billing-history.ts` | `fetchBillingHistory()` ← set-state-in-effect |
+| `web/src/components/datetime-picker.tsx` | `setDate(value)` ← set-state-in-effect（注释在上一行 + `setDate(value)` 后留一空行再 `setMonth(value)`；2026-10-31 补录，此前漏登） |
 | `web/src/features/task-plugins/components/marketplace-sources-dialog.tsx` | `<DialogContent className='max-w-2xl'>` → `'sm:max-w-2xl'`（2026-10 新上游文件的约定违规，dialog-content-width 测试守护） |
 
 2026-10 废弃记录（上游已自行解决，勿再重放）：`account-bindings-tab.tsx`（文件被上游删除）、`use-secure-verification.ts`（useReducer 重构）、`sync-wizard-dialog.tsx`（open-init useEffect 移除）、`model-mutate-drawer.tsx` 的 `setOldModelName`（锚点消失）、`conflict-confirm-dialog.tsx` 宽度（上游改用 `data-[size=default]:max-w-[calc(100%-2rem)]` 响应式方案）、`routing-reliability-section.tsx`（上游 rename 到 `request-policies/channel-health-section.tsx` 并自行实现等价 baseline 同步 `useEffect(() => { baselineRef.current = normalizeDefaults(defaultValues) }, [defaultValues])`）、`tiered-pricing-editor.tsx`（上游重写为表达式编辑器，两处旧注释锚点消失；是否需要新注释待 lint 实跑决策，与 passkey-section 同批）。
@@ -377,6 +370,17 @@ func uniqueChannelAffinityUsageCacheTestID(prefix string) string {
 七语译文以 `dev-backup-pre-sync` 分支的 locale 文件为源，注入脚本见计划任务 9（比较 backup 与当前文件、按字母序插回、保持 2 空格缩进与结尾换行）。键 1/4/5 服务于 B8；键 2/3 服务于 B12 草稿徽标；任何人新增 UI 文案时，对应键值必须当次补录（开发习惯条款）。
 删除记录：原键 2 `Pricing changes saved to draft. Click "Save model prices" to apply.` 已于 2026-08-27 从七语全部移除（死键，无源码引用）。**locale 删键纪律**：sync-i18n 以"最富语言"自动选 base，只删单一语言会被反向回填——必须七个文件同时删净后再跑 `i18n:sync`，随后 grep 校验混淆品牌行未变。
 
+### B19 `dashboard/lib/flow.ts(+test)` — 敏感过滤器标签脱敏（2026-10-31 补录建档）
+
+锚点：`maskFlowFilterOptions`（flow.ts）、`masks sensitive filter labels`（flow.test.ts）。本地面板过滤下拉里，maskSensitive 开启时用户/节点标签同样脱敏（上游只脱敏图内标签，漏了 filterOptions）。重放 = 三处：
+1. `maskFlowGraphLabels` 函数之后插 `maskFlowFilterOptions(filterOptions): FlowFilterOptions`（users 全部 `maskFlowLabel(user.label)`；nodes 仅 `SENSITIVE_FLOW_KINDS.has(node.kind) && !OTHER_FLOW_NODE_ID_SET.has(node.value)` 时脱敏）。
+2. `buildDashboardFlowData` 内把原来内联在 return 里的 `filterOptions: {...}` 提为 return 前的 `const filterOptions: FlowFilterOptions = {...}`（内容不变），return 改为 `filterOptions: options.maskSensitive ? maskFlowFilterOptions(filterOptions) : filterOptions`。
+3. flow.test.ts 在 `builds Sankey spec` 用例前插 `test('masks sensitive filter labels when sensitive data is hidden', ...)`。原文提取：`git show dev-backup-pre-sync:web/src/features/dashboard/lib/flow.ts`。
+
+### B20 `controller/misc.go` — 邮箱验证码接口注册开关门禁（2026-10-31 补录建档）
+
+锚点：`PasswordRegisterEnabled`（misc.go）。本地安全修复（原 commit 11a39fd94）：`SendEmailVerification` 函数体开头插两个 if 门禁——`!common.RegisterEnabled` → 400 "New user registration has been disabled by administrator"；`!common.PasswordRegisterEnabled` → 400 "Password registration has been disabled by administrator, please use third-party account verification"。背景：未开注册的站点该端点仍可被外部刷验证码邮件。上游若改此函数需人工融合（以 `dev-backup-pre-sync` 版 diff 为准）。
+
 ## C 类：主动放弃的上游特性（每轮合并重新决策，防静默带回）
 
 | # | 特性 | 放弃原因 | 涉及文件与本轮剔除动作 |
@@ -407,7 +411,10 @@ $pairs = @(
   @('model/subscription.go','SyncPlanSubscriptionsTx')
   @('controller/subscription.go','SyncPlanSubscriptionsTx')
   @('model/subscription_sync_test.go','SyncPlanSubscriptionsTx')
-  @('service/channel_affinity_usage_cache_test.go','uniqueChannelAffinityUsageCacheTestID')
+  @('controller/misc.go','PasswordRegisterEnabled')
+  @('web/src/components/datetime-picker.tsx','set-state-in-effect')
+  @('web/src/features/dashboard/lib/flow.ts','maskFlowFilterOptions')
+  @('web/src/features/dashboard/lib/flow.test.ts','masks sensitive filter labels')
   @('web/src/features/users/components/dialogs/user-binding-dialog.tsx','set-state-in-effect')
   @('web/src/features/task-plugins/components/marketplace-sources-dialog.tsx','sm:max-w-2xl')
   @('web/src/i18n/locales/en.json','Updated; synced {{count}} active subscriptions')
@@ -420,6 +427,8 @@ foreach ($p in $pairs) {
 ```
 
 > 执行方式勘误（2026-10-11）：本节与漂移检测脚本的多行 `@(...)` 数组字面量在部分自动化 shell 环境会被逐字符拆散（元素退化为单字符，0 命中静默通过/全 FAIL）。稳定做法：把 pairs 写成 JSON 文件后 `ConvertFrom-Json` 再循环（`$p[0]`/`$p[1]` 语义不变）；交互式终端粘贴不受影响。
+>
+> 勘误（2026-10-31）：`Select-String` 配 `-SimpleMatch` 时 pattern 必须用原始字符串，**不可先过 `[regex]::Escape`**——转义后的 `\.`、`\*`、`\[` 会作为字面量去匹配（永远 0 命中），正向锚点误报 FAIL、反向断言误报 PASS，比拆散数组更隐蔽。全字符转义只有配正则模式（不带 -SimpleMatch）才成立。
 
 反向断言（C 类与已退役项确已缺席，全部应无命中；文件不存在时 Test-Path 返回 False 即 PASS）：
 
@@ -451,7 +460,8 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
                'web/src/features/system-settings/types.ts',
                'web/src/features/system-settings/hooks/use-update-option.ts',
                'web/src/styles/theme.css',
-               'web/index.html') {
+               'web/index.html',
+               'service/channel_affinity_usage_cache_test.go') {
   $d = git diff --name-only upstream/main -- $f
   if ($d) { "FAIL 应等于上游`t$f" } else { "PASS (=upstream) $f" }
 }
@@ -473,3 +483,4 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
 | 2026-08-27 | bc14c18f（同轮收尾，未 push） | 0（83 已全部并入） | 门槛收尾：format:check 5 个上游带入文件按 oxfmt 归一（剥保护头流程）；三个本地 node:test 测试迁 vitest（dialog-content-width / update-option-results / format-multikey）；漂移脚本第 2 段 PS 判定勘误（见脚本下方注记） |
 | 2026-08-27 | —（非同步轮·退役专项） | — | 退役 B1/B4/B5：相关文件取上游或还原调用面，删 model_ratio_test.go 与孤儿 update-option-results(+test)；B11 键2 七语清理，实测发现 sync-i18n「最富语言选 base」对删键不友好——必须七语同时删净再跑 sync（纪律已写入 B11）；借机全量比对上游归档手册外差异：C1 补录 model-ratio-form 管线移除、B10 补列 4 文件、新增 B12 草稿徽标 |
 | 2026-10-11 | 8f6961c67 | 262 commits（1603 文件，+244k/−46k） | 最大单轮同步。上游架构级变更全收：任务适配器→JS 插件（moejs）、relaykit 大修+tokenkit、Responses WebSocket、表达式计费扩展、控制台 i18n 重写(#7712)、安全强化批。冲突面 71 文件整取上游后重放 60 个：B8 前后端融合（上游首触 controller/subscription.go）、B2/B3/B11/B12 常规、B7+B13 部署定制、B15/B16/B17/B18 补录建档、B10 扩至 35 文件并废弃 7 项（详见 B10 废弃记录）。rename 检测带出 2 个非 both 冲突（two-fa-setup-dialog、channel-health-section，整取上游）；上游删除 account-bindings-tab 接受；.codegraph/.superpowers/.zcode 借 B7 未重放窗口误入 merge commit，已补 fix commit 解除跟踪。C1 在新定价结构上重新执行（unset-models 页签/variant 管线清除 + editor-layout 测试收缩为单 variant）。locale 红线：七语混淆行与上游逐字节一致 PASS。门槛全过：go build/test、relaykit GOWORK=off、typecheck/build/vitest 2196 全绿、oxfmt 54 文件净（spawnSync ENOENT 勘误见验证门槛注）。theme-preferences 测试按 B17 本地语义改写（preset=anthropic、defaults 字体 serif）。 |
+| 2026-10-31 | 0f38a14a5 | 150 commits（546 文件，+39k/−8k） | 冲突面 27 文件（4 处内容冲突：Dockerfile、channel_affinity_test、notification-tab、model-ratio-table-columns），无 rename 带出的非 both 冲突、无合并删除。重放：B2/B3/B7/B10(6 文件+datetime-picker 补录)/B11/B12/B18 常规、C1 editor-layout 测试再收缩（上游新增 Expose ratio API 断言段，单 variant 融合）、B19 flow 过滤器脱敏与 B20 misc.go 邮箱验证门禁建档（此前漏登）。B9 退役（上游 atomic.Int64 重写同解碰撞）；redemption-form.ts 纯 import 折行归入有意放弃。locale 考古：14 个本地死键（零 t() 引用，11 个上游本轮删、3 个上游从未有）不重放，随上游版自然清除；B11 五键尾注入+i18n:sync 归一，七语混淆行与上游逐字节一致 PASS。工具链：上游 typecheck 换 `bun check -b`（Bun ≥1.4.3 内置），本地 bun 1.3.14→升级后执行；affinity 测试更名前缀仍匹配。门槛：go build/三组 go test、relaykit GOWORK=off（53 文件改动）、typecheck/build、format:check 净（4 文件 oxfmt 归一：1 本地融合+3 上游带入，纯折行）。漂移检测：双方都改 27 文件断言全过，仅本地 102 文件零被动。 |

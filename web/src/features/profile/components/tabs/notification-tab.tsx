@@ -93,6 +93,7 @@ export function NotificationTab({
   useEffect(() => {
     if (profile?.setting) {
       const next = normalizeUserSettings(profile.setting)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettings(next)
       // 0 means the site default and shows as an empty input.
       setThresholdInput(
