@@ -54,16 +54,12 @@ $replayFiles = @(
   '.github/workflows/electron-build.yml'; '.github/workflows/release.yml'; 'Dockerfile'
   'controller/misc.go'; 'model/subscription.go'; 'controller/subscription.go'
   'docker-compose.yml'; '.gitignore'; 'web/.oxlintrc.json'; 'web/rsbuild.config.ts'
-  'web/src/lib/theme-customization.ts'; 'web/src/context/theme-customization-provider.tsx'
   'web/src/i18n/locales/en.json'; 'web/src/i18n/locales/fr.json'; 'web/src/i18n/locales/ja.json'
   'web/src/i18n/locales/ru.json'; 'web/src/i18n/locales/vi.json'; 'web/src/i18n/locales/zh-TW.json'; 'web/src/i18n/locales/zh.json'
   'web/src/components/datetime-picker.tsx'
   'web/src/features/dashboard/lib/flow.ts'; 'web/src/features/dashboard/lib/flow.test.ts'
-  'web/src/features/model-pricing/__tests__/editor-layout.test.tsx'
   'web/src/features/system-settings/billing/section-registry.tsx'
-  'web/src/features/system-settings/models/model-ratio-form.tsx'
   'web/src/features/system-settings/models/ratio-settings-card.tsx'
-  'web/src/features/system-settings/models/model-ratio-table-columns.tsx'
   'web/src/features/usage-logs/lib/format.ts'
   'web/src/features/usage-logs/components/dialogs/details-dialog.tsx'
   'web/src/features/usage-logs/components/columns/common-logs-columns.tsx'
@@ -114,13 +110,12 @@ foreach ($f in $oursOnly) {
 | relay 适配 | `relay/channel/ai360/`（360AI 渠道适配 + 敏感数据遮蔽，注意上游历史里也有同名目录，属共享基底，本地在其上叠了一个 feature commit）；含 `constants_test.go` 模型列表回归 |
 | 订阅特性后端 | `model/subscription_sync_test.go`；`controller/subscription.go` 内 SyncPlanSubscriptionsTx 调用面（2026-10 起上游也动该文件，调用面融合归 B8） |
 | multikey 日志前端 | `web/src/features/usage-logs/lib/format-multikey.test.ts`；多键列显示已于 2026-10 升级进 B18（`common-logs-columns.tsx` 上游已触碰） |
-| 价格表草稿徽标 | `web/src/features/system-settings/models/model-ratio-table-columns.tsx` 本地渲染（详见 B12；数据结构来自上游原生 model-pricing-snapshots） |
 | 前端工程配置 | `web/.oxlintrc.json`（B15）、`web/rsbuild.config.ts`（B16）、`web/scripts/` i18n/format 脚本 |
 | 工具脚本 | `scripts/start-dev.ps1`、`scripts/release.bat`、`scripts/sync-script-tests.ps1`、`scripts/README.md` |
 | 测试 | `service/codex_wham_usage_test.go`；`web/src/components/ui/dialog-content-width.test.ts`（DialogContent 宽度约定扫描，2026-10 抓到上游新文件 marketplace-sources-dialog 违规一次）；随上游 vitest 化（2026-08-27） |
 | 文档 | `docs/superpowers/**`、`docs/upstream-sync.md` 本手册 |
 
-> 历史行记录：silent-batch 前端库（update-option-results）、theme.css 黑白灰预设、index.html 防闪烁脚本已于 2026-08-27 随 B4/B5 退役从本表移除。
+> 历史行记录：silent-batch 前端库（update-option-results）、theme.css 黑白灰预设、index.html 防闪烁脚本已于 2026-08-27 随 B4/B5 退役从本表移除；价格表草稿徽标行已于 2026-11-01 随 B12 退役从本表移除。
 
 ## B 类：上游文件内的本地修改（覆盖后必须重放）
 
@@ -326,7 +321,9 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 
 有意放弃（2026-08 起）：user-binding-dialog 中原 diff 的空行分隔、`api-key-group-cell.tsx` 格式化收拢、`missing-models-dialog.tsx`/`sync-wizard-dialog.tsx` 空行，纯排版噪声。
 
-### B12 `model-ratio-table-columns.tsx` — 价格表草稿徽标（2026-08-27 补录）
+### B12 `model-ratio-table-columns.tsx` — 价格表草稿徽标（2026-08-27 补录）— 【已退役 2026-11-01】
+
+主动放弃：整文件取上游；B11 键 2/3（`Draft`、`Will be removed`）已七语同删。反向断言见锚点索引 equalsUpstream。以下为历史重放说明（勿再执行）：
 
 锚点：`isDraftChanged`、`Will be removed`。本地在 `buildModelRatioColumns` 的 name 列与价格明细列各渲染一个 Draft 徽标块（约 +30 行），数据来自上游原生 `model-pricing-snapshots.ts` 行结构（isDraftChanged/isDraftDeleted/draft 字段由 `model-ratio-visual-editor.tsx` 填充，均上游代码）。i18n 依赖 B11 键 2/3。某轮覆盖后重放：从 `dev-backup-pre-sync` 提取该文件 diff，两段徽标 JSX 按上游结构回插即可。
 
@@ -348,7 +345,9 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 
 锚点：`port: 5173`。server 块内 `host` 之后插入两行中文注释 + `port: 5173,`（避免 dev server 抢占后端 3000 端口导致 /api 代理回环挂起）。
 
-### B17 默认主题预设 anthropic（2026-10-11 补录，v1.2.3 特性）
+### B17 默认主题预设 anthropic（2026-10-11 补录，v1.2.3 特性）— 【已退役 2026-11-01】
+
+主动放弃：`web/src/lib/theme-customization.ts`、`web/src/context/theme-customization-provider.tsx`、`web/src/context/__tests__/theme-preferences.test.tsx` 三文件整文件取上游，站点默认主题回归上游预设（上游本就可在界面切 anthropic 预设，仅默认值不同，测试断言回归上游语义）。反向断言见锚点索引 equalsUpstream。以下为历史重放说明（勿再执行）：
 
 锚点：`preset: 'anthropic'`（`web/src/lib/theme-customization.ts` 的 DEFAULT_THEME_CUSTOMIZATION）。配套 `web/src/context/theme-customization-provider.tsx`：`data-theme-preset` **始终写入**（不得按默认值省略——anthropic 只能经 `[data-theme-preset='anthropic']` 块生效，与 radius/scale 的"删属性回退"机制不同），注释连同回插。上游的 `theme-preferences.test.tsx` 断言上游默认语义，需按本地语义同步修改：preset 断言改 `toHaveAttribute('data-theme-preset', 'anthropic')`；defaults 语境的 `data-theme-font` 断言改 `'serif'`（anthropic 预设默认字体；显式切 Default preset 的用例仍为 `'system'`）。
 
@@ -358,17 +357,15 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 
 > 补录说明：此前手册漏登本项；2026-08-27 与上游比对全量差异时发现并归档。同步发现 `model-ratio-form.tsx` 约 151 行差异实为 C1 的管线移除（variant/unset 全套），已并入 C1 记录，非独立特性。
 
-### B11 i18n 六键七语
+### B11 i18n 三键七语（2026-11-01 起收缩）
 
-锚点：`Updated; synced {{count}} active subscriptions`（en/zh 等 7 个 locale 文件 `.translation` 下各应有 5 个本地键）。键全集（en 原文）：
+锚点：`Updated; synced {{count}} active subscriptions`（en/zh 等 7 个 locale 文件 `.translation` 下各应有 3 个本地键）。键全集（en 原文）：
 1. `Apply changes to existing subscriptions`
-2. `Draft`
-3. `Will be removed`
-4. `Sync the new quota and reset period to active subscribers. Used quota is kept.`
-5. `Updated; synced {{count}} active subscriptions`
+2. `Sync the new quota and reset period to active subscribers. Used quota is kept.`
+3. `Updated; synced {{count}} active subscriptions`
 
-七语译文以 `dev-backup-pre-sync` 分支的 locale 文件为源，注入脚本见计划任务 9（比较 backup 与当前文件、按字母序插回、保持 2 空格缩进与结尾换行）。键 1/4/5 服务于 B8；键 2/3 服务于 B12 草稿徽标；任何人新增 UI 文案时，对应键值必须当次补录（开发习惯条款）。
-删除记录：原键 2 `Pricing changes saved to draft. Click "Save model prices" to apply.` 已于 2026-08-27 从七语全部移除（死键，无源码引用）。**locale 删键纪律**：sync-i18n 以"最富语言"自动选 base，只删单一语言会被反向回填——必须七个文件同时删净后再跑 `i18n:sync`，随后 grep 校验混淆品牌行未变。
+七语译文以 `dev-backup-pre-sync` 分支的 locale 文件为源，注入脚本见计划任务 9（比较 backup 与当前文件、按字母序插回、保持 2 空格缩进与结尾换行）。三键均服务于 B8；任何人新增 UI 文案时，对应键值必须当次补录（开发习惯条款）。
+删除记录：原键 `Pricing changes saved to draft. Click "Save model prices" to apply.` 已于 2026-08-27 从七语全部移除（死键，无源码引用）；原键 2 `Draft`、原键 3 `Will be removed` 已于 2026-11-01 随 B12 退役从七语全部移除（实测：七语同删 → `i18n:sync` → diff 恰 7×2 行删除、无回填、混淆品牌行逐字节未变）。**locale 删键纪律**：sync-i18n 以"最富语言"自动选 base，只删单一语言会被反向回填——必须七个文件同时删净后再跑 `i18n:sync`，随后 grep 校验混淆品牌行未变。
 
 ### B19 `dashboard/lib/flow.ts(+test)` — 敏感过滤器标签脱敏（2026-10-31 补录建档）
 
@@ -385,7 +382,7 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 
 | # | 特性 | 放弃原因 | 涉及文件与本轮剔除动作 |
 |---|---|---|---|
-| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口（2026-08-27 注：silent-batch 虽已退役，本剔除维持不变） | 取上游版后在 `web/src/features/system-settings/billing/section-registry.tsx` 检查 Model Pricing 与分组卡两处 `visibleTabs` 数组（约 114/127 行）不含 `'unset-models'`；在 `web/src/features/system-settings/models/ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支删去 unset-models 相关成员；在 `web/src/features/system-settings/models/model-ratio-form.tsx` 移除整套 `variant?: 'default' | 'unset'` 管线（props、isUnsetVariant 分支、enabled-models 查询与报错 toast、对应 UI 块，约 151 行）。具体代码见手册随附计划任务 6 |
+| C1 | unset-models 价格页签（默认 tab 与 variant 入口） | 与本地 silent-batch 流程冲突、产品上不需要该入口（2026-08-27 注：silent-batch 虽已退役，本剔除维持不变；2026-11-01 缩围：仅保留入口剔除） | 取上游版后在 `web/src/features/system-settings/billing/section-registry.tsx` 检查 Model Pricing 与分组卡两处 `visibleTabs` 数组（约 114/127 行）不含 `'unset-models'`；在 `web/src/features/system-settings/models/ratio-settings-card.tsx` 从 RatioTabId 联合类型、tabLabels、renderTabContent 分支删去 unset-models 相关成员（两文件合计约 ±14 行）。**2026-11-01 缩围**：`model-ratio-form.tsx` 整套 `variant?: 'default' \| 'unset'` 管线剔除（约 151 行）与 `web/src/features/model-pricing/__tests__/editor-layout.test.tsx` 收缩退役，两文件整取上游——页签经上述两处剔除后不可达，表单 variant 分支保持上游原样死路径，无需重放（已入锚点索引 equalsUpstream） |
 | C2 | superpowers-zh 框架段（CLAUDE.md） | 2026-07-14 主动删除 | 若任何来源试图恢复 CLAUDE.md 该段落，拒绝并维持删除状态 |
 
 ## 锚点速查索引（第 4 步机械校验用；PowerShell 直接粘贴）
@@ -396,9 +393,7 @@ $pairs = @(
   @('web/src/features/usage-logs/lib/format-multikey.test.ts','getMultiKeyIndex')
   @('web/src/features/usage-logs/components/dialogs/details-dialog.tsx','multiKeyLabel')
   @('web/src/features/usage-logs/components/columns/common-logs-columns.tsx','getMultiKeyIndex')
-  @('web/src/features/system-settings/models/model-ratio-table-columns.tsx','isDraftChanged')
   @('web/src/features/subscriptions/components/subscriptions-mutate-drawer.tsx','applyToExisting')
-  @('web/src/lib/theme-customization.ts','anthropic')
   @('web/src/styles/theme-presets.css','data-theme-preset')
   @('CLAUDE.md','AGENTS.md')
   @('.github/workflows/release.yml','dockeronly')
@@ -461,13 +456,21 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
                'web/src/features/system-settings/hooks/use-update-option.ts',
                'web/src/styles/theme.css',
                'web/index.html',
-               'service/channel_affinity_usage_cache_test.go') {
+               'service/channel_affinity_usage_cache_test.go',
+               'web/src/features/system-settings/models/model-ratio-form.tsx',
+               'web/src/features/system-settings/models/model-ratio-table-columns.tsx',
+               'web/src/features/model-pricing/__tests__/editor-layout.test.tsx',
+               'web/src/lib/theme-customization.ts',
+               'web/src/context/theme-customization-provider.tsx',
+               'web/src/context/__tests__/theme-preferences.test.tsx') {
   $d = git diff --name-only upstream/main -- $f
   if ($d) { "FAIL 应等于上游`t$f" } else { "PASS (=upstream) $f" }
 }
 ```
 
 > 锚点索引变更记录（2026-08-27）：随 B1/B4/B5 退役移除 model_ratio/theme.css/types/use-update-option/update-option-results 五组正向锚点；新增 B12 草稿徽标锚点 `isDraftChanged` 与上述退役反向断言。`theme-presets.css` 的 data-theme-preset 为上游自带预设机制，保留正向校验。
+>
+> 锚点索引变更记录（2026-11-01）：随 B12/B17 退役与 C1 缩围移除 model-ratio-table-columns（isDraftChanged）与 theme-customization（anthropic）两组正向锚点；equalsUpstream 反向断言新增 model-ratio-form、model-ratio-table-columns、editor-layout.test、theme-customization、theme-customization-provider、theme-preferences.test 六文件。`theme-presets.css` 的 data-theme-preset 为上游自带预设机制，保留正向校验。
 
 ## 手册维护纪律
 
@@ -484,3 +487,4 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
 | 2026-08-27 | —（非同步轮·退役专项） | — | 退役 B1/B4/B5：相关文件取上游或还原调用面，删 model_ratio_test.go 与孤儿 update-option-results(+test)；B11 键2 七语清理，实测发现 sync-i18n「最富语言选 base」对删键不友好——必须七语同时删净再跑 sync（纪律已写入 B11）；借机全量比对上游归档手册外差异：C1 补录 model-ratio-form 管线移除、B10 补列 4 文件、新增 B12 草稿徽标 |
 | 2026-10-11 | 8f6961c67 | 262 commits（1603 文件，+244k/−46k） | 最大单轮同步。上游架构级变更全收：任务适配器→JS 插件（moejs）、relaykit 大修+tokenkit、Responses WebSocket、表达式计费扩展、控制台 i18n 重写(#7712)、安全强化批。冲突面 71 文件整取上游后重放 60 个：B8 前后端融合（上游首触 controller/subscription.go）、B2/B3/B11/B12 常规、B7+B13 部署定制、B15/B16/B17/B18 补录建档、B10 扩至 35 文件并废弃 7 项（详见 B10 废弃记录）。rename 检测带出 2 个非 both 冲突（two-fa-setup-dialog、channel-health-section，整取上游）；上游删除 account-bindings-tab 接受；.codegraph/.superpowers/.zcode 借 B7 未重放窗口误入 merge commit，已补 fix commit 解除跟踪。C1 在新定价结构上重新执行（unset-models 页签/variant 管线清除 + editor-layout 测试收缩为单 variant）。locale 红线：七语混淆行与上游逐字节一致 PASS。门槛全过：go build/test、relaykit GOWORK=off、typecheck/build/vitest 2196 全绿、oxfmt 54 文件净（spawnSync ENOENT 勘误见验证门槛注）。theme-preferences 测试按 B17 本地语义改写（preset=anthropic、defaults 字体 serif）。 |
 | 2026-10-31 | 0f38a14a5 | 150 commits（546 文件，+39k/−8k） | 冲突面 27 文件（4 处内容冲突：Dockerfile、channel_affinity_test、notification-tab、model-ratio-table-columns），无 rename 带出的非 both 冲突、无合并删除。重放：B2/B3/B7/B10(6 文件+datetime-picker 补录)/B11/B12/B18 常规、C1 editor-layout 测试再收缩（上游新增 Expose ratio API 断言段，单 variant 融合）、B19 flow 过滤器脱敏与 B20 misc.go 邮箱验证门禁建档（此前漏登）。B9 退役（上游 atomic.Int64 重写同解碰撞）；redemption-form.ts 纯 import 折行归入有意放弃。locale 考古：14 个本地死键（零 t() 引用，11 个上游本轮删、3 个上游从未有）不重放，随上游版自然清除；B11 五键尾注入+i18n:sync 归一，七语混淆行与上游逐字节一致 PASS。工具链：上游 typecheck 换 `bun check -b`（Bun ≥1.4.3 内置），本地 bun 1.3.14→升级后执行；affinity 测试更名前缀仍匹配。门槛：go build/三组 go test、relaykit GOWORK=off（53 文件改动）、build 过、vitest 2471 全绿（首轮 1 例偶发失败两轮未复现）、format:check 净（4 文件 oxfmt 归一：1 本地融合+3 上游带入，纯折行）；typecheck 因本地 Bun 1.3.14 无 `bun check` 先以 `bunx -p typescript@latest tsc -b` 等价通过，Bun 经 npm 通道升级至 1.4.4 后原命令 `bun check -b` 补跑通过（1412 文件 / 2 项目，721ms）。漂移检测：双方都改 27 文件断言全过，仅本地 102 文件零被动。 |
+| 2026-11-01 | —（非同步轮·退役专项） | — | 复盘定策「保留有价值的、无价值的取上游」：B12 草稿徽标退役（model-ratio-table-columns 整取上游）、B17 默认主题 anthropic 退役（theme-customization.ts / theme-customization-provider.tsx / theme-preferences.test.tsx 整取上游）、C1 缩围（model-ratio-form.tsx 与 editor-layout.test.tsx 整取上游，仅留 section-registry / ratio-settings-card 两处入口剔除）。B11 键 2/3 七语同删 + i18n:sync（diff 恰 7×2 行删除、无回填、混淆品牌行逐字节未变），键集 5→3。B10/B15 经核实维持现状（上游自身代码亦带同款抑制注释，每轮付费子集仅数文件）。门槛：6 文件 equalsUpstream PASS、unset-models 反向断言 PASS、typecheck（bun check -b，1412 文件 0 错）、build 过、vitest 定向 theme-preferences + editor-layout 2 文件 20 例全绿（回归上游语义）。go 侧零改动未跑。 |
