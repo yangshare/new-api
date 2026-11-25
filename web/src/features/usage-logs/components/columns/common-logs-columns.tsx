@@ -62,7 +62,6 @@ import {
   hasAnyCacheTokens,
   parseLogOther,
   isViolationFeeLog,
-  getMultiKeyIndex,
   logTokenName,
   renderAuditContent,
   renderLogContent,
@@ -77,6 +76,7 @@ import type { LogOtherData } from '../../types'
 import { DetailsDialog } from '../dialogs/details-dialog'
 import { LogCostDisplay } from '../log-cost-display'
 import { ModelBadge } from '../model-badge'
+import { RequestPluginLogMarker } from '../request-plugin-record'
 import { TimingMetricsCell, StreamTpsCell } from '../timing-metrics-cell'
 import { useUsageLogsContext } from '../usage-logs-provider'
 
@@ -181,7 +181,7 @@ function buildTypeDetailSegments(
     return showUnit ? `${text}/M` : text
   }
   const isTieredExpr = other.billing_mode === 'tiered_expr'
-  const tieredSummary = getTieredBillingSummary(other)
+  const tieredSummary = getTieredBillingSummary(other, log.model_name)
   if (isTieredExpr && other.is_task) {
     const tiers = parseTaskTiersFromExpr(
       decodeBillingExprB64(other.expr_b64),
@@ -237,11 +237,11 @@ function buildTypeDetailSegments(
           ].includes(entry.field)
         )
         .map((entry) => {
-          return formatPriceCompact(entry.price)
+          return `${t(entry.shortLabel)} ${formatPrice(entry.price)}`
         })
       if (cacheEntries.length > 0) {
         segments.push({
-          text: `${t('Cache')} ${formatPriceList(cacheEntries, false)}`,
+          text: cacheEntries.join(' · '),
           muted: true,
         })
       }
@@ -408,13 +408,6 @@ export function useCommonLogsColumns(
             if (!isDisplayableLogType(log.type)) return null
 
             const other = parseLogOther(log.other)
-            const multiKeyIndex = getMultiKeyIndex(other)
-            const multiKeyLabel =
-              multiKeyIndex === null ? null : `K${multiKeyIndex}`
-            const multiKeyTitle =
-              multiKeyIndex === null
-                ? undefined
-                : `${t('Key')} ${t('Index')}: ${multiKeyIndex}`
             const affinity = other?.admin_info?.channel_affinity
             const rawUseChannel = other?.admin_info?.use_channel ?? []
             const useChannel = Array.isArray(rawUseChannel)
@@ -429,6 +422,11 @@ export function useCommonLogsColumns(
               : `#${log.channel}`
             const channelIdDisplay = `#${log.channel}`
             const channelName = sensitiveVisible ? log.channel_name : '••••'
+            const multiKeyIndex = other?.admin_info?.multi_key_index
+            const showMultiKeyIndex =
+              other?.admin_info?.is_multi_key === true &&
+              typeof multiKeyIndex === 'number' &&
+              Number.isFinite(multiKeyIndex)
 
             return (
               <TooltipProvider>
@@ -447,16 +445,15 @@ export function useCommonLogsColumns(
                         showDot={false}
                         className='font-mono'
                       />
-                      {multiKeyLabel && (
+                      {showMultiKeyIndex && (
                         <StatusBadge
-                          label={multiKeyLabel}
-                          variant='neutral'
+                          label={String(multiKeyIndex)}
                           size='sm'
                           showDot={false}
                           copyable={false}
-                          title={multiKeyTitle}
-                          aria-label={multiKeyTitle}
-                          className='border-border/60 bg-muted/40 font-mono'
+                          variant='neutral'
+                          className='h-5 min-w-5 justify-center rounded-full px-1 font-mono text-xs'
+                          aria-label={`${t('Key')} ${multiKeyIndex}`}
                         />
                       )}
                       {hasRetryChain && (
@@ -528,7 +525,7 @@ export function useCommonLogsColumns(
                           {t('Chain')}: {channelChain}
                         </p>
                       )}
-                      {multiKeyIndex !== null && (
+                      {showMultiKeyIndex && (
                         <p className='text-muted-foreground text-xs'>
                           {t('Key')}: {multiKeyIndex}
                         </p>
@@ -689,6 +686,7 @@ export function useCommonLogsColumns(
           if (!isDisplayableLogType(log.type)) return null
 
           const modelInfo = formatModelName(log)
+          const requestPlugins = parseLogOther(log.other)?.request_plugins
 
           return (
             <div className='flex w-fit flex-col gap-0.5'>
@@ -697,6 +695,9 @@ export function useCommonLogsColumns(
                 actualModel={modelInfo.actualModel}
                 responseModel={modelInfo.responseModel}
               />
+              {requestPlugins?.length ? (
+                <RequestPluginLogMarker items={requestPlugins} />
+              ) : null}
             </div>
           )
         },

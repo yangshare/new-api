@@ -36,6 +36,7 @@ import {
   type ModelPricingConfig,
 } from '@/features/model-pricing/api'
 import { pricingOptions } from '@/features/model-pricing/pricing'
+import { useMediaQuery } from '@/hooks'
 import { handleServerError } from '@/lib/handle-server-error'
 
 import { SettingsPageTitleStatusPortal } from '../components/settings-page-context'
@@ -149,7 +150,12 @@ const createGroupSchema = (t: Translate) =>
 
 type ModelFormValues = z.infer<ReturnType<typeof createModelSchema>>
 type GroupFormValues = z.infer<ReturnType<typeof createGroupSchema>>
-type RatioTabId = 'models' | 'groups' | 'tool-prices' | 'upstream-sync'
+type RatioTabId =
+  | 'models'
+  | 'unset-models'
+  | 'groups'
+  | 'tool-prices'
+  | 'upstream-sync'
 
 type RatioSettingsCardProps = {
   modelDefaults: ModelFormValues
@@ -167,6 +173,7 @@ export function RatioSettingsCard({
   visibleTabs = ['models', 'groups', 'tool-prices', 'upstream-sync'],
 }: RatioSettingsCardProps) {
   const { t } = useTranslation()
+  const isMobile = useMediaQuery('(max-width: 639px)')
   const updateOption = useUpdateOption()
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -450,6 +457,7 @@ export function RatioSettingsCard({
 
   const tabLabels: Record<RatioTabId, string> = {
     models: 'Model prices',
+    'unset-models': 'Unset price models',
     groups: 'Group ratios',
     'tool-prices': 'Tool prices',
     'upstream-sync': 'Upstream price sync',
@@ -465,7 +473,7 @@ export function RatioSettingsCard({
   const defaultTab = visibleTabs[0] ?? 'models'
 
   const renderTabContent = (tab: RatioTabId) => {
-    if (tab === 'models') {
+    if (tab === 'models' || tab === 'unset-models') {
       if (pricingQuery.isError) {
         return (
           <ErrorState
@@ -497,6 +505,7 @@ export function RatioSettingsCard({
             onReset={handleResetRatios}
             isSaving={updateOption.isPending || savePricing.isPending}
             isResetting={resetMutation.isPending}
+            variant={tab === 'unset-models' ? 'unset' : 'default'}
           />
         </>
       )
@@ -517,9 +526,19 @@ export function RatioSettingsCard({
   }
 
   const renderTabSwitcher = () => (
-    <TabsList className={`grid w-fit max-w-full ${tabsGridClass}`}>
+    <TabsList
+      className={
+        isMobile
+          ? 'flex w-full justify-start overflow-x-auto'
+          : `grid w-fit max-w-full ${tabsGridClass}`
+      }
+    >
       {visibleTabs.map((tab) => (
-        <TabsTrigger key={tab} value={tab}>
+        <TabsTrigger
+          key={tab}
+          value={tab}
+          className={isMobile ? 'flex-none px-3' : undefined}
+        >
           {t(tabLabels[tab])}
         </TabsTrigger>
       ))}
@@ -532,16 +551,23 @@ export function RatioSettingsCard({
         <SettingsSection
           title={t(titleKey)}
           className={
-            defaultTab === 'models' ? 'min-h-0 flex-1' : undefined
+            defaultTab === 'models' || defaultTab === 'unset-models'
+              ? 'min-h-0 flex-1'
+              : undefined
           }
         >
           {renderTabContent(defaultTab)}
         </SettingsSection>
       ) : (
         <Tabs defaultValue={defaultTab} className='h-full min-h-0 gap-6'>
-          <SettingsPageTitleStatusPortal>
-            {renderTabSwitcher()}
-          </SettingsPageTitleStatusPortal>
+          {/* The phone title row is too narrow for the tabs. */}
+          {isMobile ? (
+            renderTabSwitcher()
+          ) : (
+            <SettingsPageTitleStatusPortal>
+              {renderTabSwitcher()}
+            </SettingsPageTitleStatusPortal>
+          )}
 
           <SettingsSection title={t(titleKey)} className='min-h-0 flex-1'>
             {visibleTabs.map((tab) => (
@@ -549,7 +575,7 @@ export function RatioSettingsCard({
                 key={tab}
                 value={tab}
                 className={
-                  tab === 'models'
+                  tab === 'models' || tab === 'unset-models'
                     ? 'flex min-h-0 flex-col data-hidden:hidden'
                     : 'min-h-0'
                 }

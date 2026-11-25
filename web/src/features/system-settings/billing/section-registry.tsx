@@ -111,7 +111,7 @@ const BILLING_SECTIONS = [
         modelDefaults={getModelDefaults(settings)}
         groupDefaults={getGroupDefaults(settings)}
         toolPricesDefault={settings['tool_price_setting.prices']}
-        visibleTabs={['models', 'tool-prices', 'upstream-sync']}
+        visibleTabs={['models', 'unset-models', 'tool-prices', 'upstream-sync']}
       />
     ),
   },
@@ -137,6 +137,11 @@ const BILLING_SECTIONS = [
           PayAddress: settings.PayAddress,
           EpayId: settings.EpayId,
           EpayKey: settings.EpayKey,
+          EpaySignType: settings['payment_setting.epay_sign_type'],
+          EpayMerchantPrivateKey:
+            settings['payment_setting.epay_merchant_private_key'],
+          EpayPlatformPublicKey:
+            settings['payment_setting.epay_platform_public_key'],
           Price: settings.Price,
           MinTopUp: settings.MinTopUp,
           CustomCallbackAddress: settings.CustomCallbackAddress,

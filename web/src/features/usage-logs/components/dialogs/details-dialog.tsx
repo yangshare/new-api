@@ -49,6 +49,7 @@ import {
   UserCog,
   Info,
   LogIn,
+  Workflow,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
@@ -59,6 +60,11 @@ import { Label } from '@/components/ui/label'
 import { DynamicPricingBreakdown } from '@/features/pricing/components/dynamic-pricing-breakdown'
 import { usePricingData } from '@/features/pricing/hooks/use-pricing-data'
 import { BILLING_PRICING_VARS } from '@/features/pricing/lib/billing-expr'
+import { compileBillingExpression } from '@/features/pricing/lib/billing-expression/parser'
+import {
+  getCachePriceLabels,
+  getCachePricingMode,
+} from '@/features/pricing/lib/cache-pricing'
 import { pluginUsageSchema } from '@/features/pricing/lib/plugin-pricing'
 import { PolicyDecisionRecord } from '@/features/system-settings/request-policies/decision-record'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
@@ -82,7 +88,6 @@ import {
   getReasoningEffortVariant,
   logTokenName,
   renderAuditContent,
-  getMultiKeyIndex,
   renderLogContent,
 } from '../../lib/format'
 import { buildQuotaAuditOperation } from '../../lib/quota-audit-operation'
@@ -94,6 +99,10 @@ import {
 import { USAGE_BILLING_PATH, type LogOtherData } from '../../types'
 import { ResponseModelDetails } from '../model-badge'
 import { PluginAuthorLink } from '../plugin-author-link'
+import {
+  RequestPluginAdminSteps,
+  RequestPluginRecord,
+} from '../request-plugin-record'
 import { DetailRow, DetailSection } from './log-detail-layout'
 
 // Maps a channel-update changed-field token (as recorded by the backend audit)
@@ -178,7 +187,7 @@ function BillingBreakdown(props: {
   // OpenAI 12-hour cache writes have their own price, listed like Claude's.
   const hasCacheWrite12h = (other.cache_creation_tokens_12h || 0) > 0
   const isTieredExpr = other.billing_mode === 'tiered_expr'
-  const tieredSummary = getTieredBillingSummary(other)
+  const tieredSummary = getTieredBillingSummary(other, log.model_name)
 
   const rows: Array<{ label: string; value: string }> = []
   const priceOpts = { digitsLarge: 4, digitsSmall: 6, abbreviate: false }
@@ -259,9 +268,7 @@ function BillingBreakdown(props: {
       other.cache_creation_ratio !== 1
     ) {
       rows.push({
-        label: hasCacheWrite12h
-          ? t('Cache Creation (30m)')
-          : t('Cache Creation'),
+        label: hasCacheWrite12h ? t('Cache Write (30m)') : t('Cache Write'),
         value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio)}/M`,
       })
     }
@@ -270,7 +277,7 @@ function BillingBreakdown(props: {
       other.cache_creation_ratio_5m !== 0
     ) {
       rows.push({
-        label: t('Cache Creation (5m)'),
+        label: t('Cache Write (5m)'),
         value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio_5m)}/M`,
       })
     }
@@ -279,7 +286,7 @@ function BillingBreakdown(props: {
       other.cache_creation_ratio_1h !== 0
     ) {
       rows.push({
-        label: t('Cache Creation (1h)'),
+        label: t('Cache Write (1h)'),
         value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio_1h)}/M`,
       })
     }
@@ -288,7 +295,7 @@ function BillingBreakdown(props: {
       other.cache_creation_ratio_12h !== 0
     ) {
       rows.push({
-        label: t('Cache Creation (12h)'),
+        label: t('Cache Write (12h)'),
         value: `${fmtPrice(baseInputUSD * other.cache_creation_ratio_12h)}/M`,
       })
     }
@@ -409,6 +416,14 @@ function TokenBreakdown(props: { log: UsageLog; other: LogOtherData }) {
 
   if (!hasTokens) return null
 
+  const compiled = compileBillingExpression(
+    decodeBillingExprB64(other.expr_b64)
+  )
+  const cacheMode = getCachePricingMode(
+    compiled.status === 'ready' ? compiled.variables : [],
+    log.model_name
+  )
+
   const rows: Array<{ label: string; value: string }> = []
 
   rows.push({ label: t('Input Tokens'), value: promptTokens.toLocaleString() })
@@ -498,7 +513,7 @@ function TokenBreakdown(props: { log: UsageLog; other: LogOtherData }) {
             return (
               <DetailRow
                 key={variable.key}
-                label={t(variable.shortLabel)}
+                label={t(getCachePriceLabels(variable, cacheMode).shortLabel)}
                 value={count.toLocaleString()}
                 mono
               />
@@ -522,12 +537,6 @@ export function DetailsDialog(props: DetailsDialogProps) {
   const { t } = useTranslation()
   const { copiedText, copyToClipboard } = useCopyToClipboard({ notify: false })
   const other = parseLogOther(props.log.other)
-  const multiKeyIndex = getMultiKeyIndex(other)
-  const multiKeyLabel = multiKeyIndex === null ? null : `K${multiKeyIndex}`
-  const multiKeyTitle =
-    multiKeyIndex === null
-      ? undefined
-      : `${t('Key')} ${t('Index')}: ${multiKeyIndex}`
   const typeConfig = getLogTypeConfig(props.log.type)
 
   const isViolation = isViolationFeeLog(other)
@@ -723,24 +732,13 @@ export function DetailsDialog(props: DetailsDialogProps) {
             <DetailRow
               label={t('Channel')}
               value={
-                <span className='inline-flex flex-wrap items-center gap-1'>
-                  <span>{props.log.channel}</span>
+                <span>
+                  {props.log.channel}
                   {props.log.channel_name && (
                     <span className='text-muted-foreground'>
+                      {' '}
                       ({props.log.channel_name})
                     </span>
-                  )}
-                  {multiKeyLabel && (
-                    <StatusBadge
-                      label={multiKeyLabel}
-                      variant='neutral'
-                      size='sm'
-                      showDot={false}
-                      copyable={false}
-                      title={multiKeyTitle}
-                      aria-label={multiKeyTitle}
-                      className='border-border/60 bg-muted/40 font-mono'
-                    />
                   )}
                 </span>
               }
@@ -981,6 +979,12 @@ export function DetailsDialog(props: DetailsDialogProps) {
                 }
               />
             ) : null}
+          </DetailSection>
+        ) : null}
+
+        {props.isAdmin && adminInfo?.request_plugins?.length ? (
+          <DetailSection label={t('Request processing steps')}>
+            <RequestPluginAdminSteps steps={adminInfo.request_plugins} />
           </DetailSection>
         ) : null}
 
@@ -1247,6 +1251,7 @@ export function DetailsDialog(props: DetailsDialogProps) {
               />
             )}
             <DynamicPricingBreakdown
+              modelName={props.log.model_name}
               compact
               billingExpr={decodeBillingExprB64(other.expr_b64)}
               matchedTierLabel={other.matched_tier}
@@ -1370,6 +1375,19 @@ export function DetailsDialog(props: DetailsDialogProps) {
             )}
           </DetailSection>
         )}
+
+        {other?.request_plugins?.length ? (
+          <DetailSection
+            icon={<Workflow className='size-3.5' aria-hidden='true' />}
+            iconTone='chart-3'
+            label={t('Request processing')}
+          >
+            <RequestPluginRecord
+              items={other.request_plugins}
+              loadIcons={props.isRoot}
+            />
+          </DetailSection>
+        ) : null}
 
         {/* Param override */}
         {other?.po && Array.isArray(other.po) && other.po.length > 0 && (

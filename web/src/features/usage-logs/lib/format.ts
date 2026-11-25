@@ -24,6 +24,10 @@ import {
   splitBillingExprAndRequestRules,
   type ParsedTier,
 } from '@/features/pricing/lib/billing-expr'
+import {
+  getCachePriceLabels,
+  getTierCachePricingMode,
+} from '@/features/pricing/lib/cache-pricing'
 import { translateServerText } from '@/lib/server-error-message'
 
 import type { UsageLog } from '../data/schema'
@@ -190,29 +194,6 @@ export function getReasoningEffortVariant(
 }
 
 /**
- * Extract the selected multi-key index from parsed log metadata.
- *
- * The value is a key-list index, not a database ID or secret key content.
- */
-export function getMultiKeyIndex(
-  other: LogOtherData | null | undefined
-): number | null {
-  if (other?.admin_info?.is_multi_key !== true) return null
-
-  const index = other.admin_info.multi_key_index
-  if (
-    typeof index !== 'number' ||
-    !Number.isFinite(index) ||
-    !Number.isInteger(index) ||
-    index < 0
-  ) {
-    return null
-  }
-
-  return index
-}
-
-/**
  * Get time color based on duration (in seconds)
  */
 export function getTimeColor(
@@ -366,7 +347,8 @@ export function hasAnyCacheTokens(
 }
 
 export function getTieredBillingSummary(
-  other: LogOtherData | null
+  other: LogOtherData | null,
+  modelName?: string
 ): TieredBillingSummary | null {
   if (!other || other.billing_mode !== 'tiered_expr') return null
   const exprStr = decodeBillingExprB64(other.expr_b64)
@@ -425,6 +407,7 @@ export function getTieredBillingSummary(
   }
 
   const cacheTokensPresent = hasAnyCacheTokens(other)
+  const cacheMode = getTierCachePricingMode(tiers, modelName)
 
   const priceEntries: TieredBillingSummary['priceEntries'] = []
   for (const v of BILLING_PRICING_VARS) {
@@ -435,7 +418,7 @@ export function getTieredBillingSummary(
     if (Number.isFinite(price) && price >= 0) {
       priceEntries.push({
         field: v.field,
-        shortLabel: v.shortLabel,
+        shortLabel: getCachePriceLabels(v, cacheMode).shortLabel,
         price,
       })
     }
