@@ -140,8 +140,10 @@ export function MultiKeyManageDialog({
   // Reset and load data when dialog opens
   useEffect(() => {
     if (open && currentRow) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentPage(1)
       setStatusFilter(null)
+      // eslint-disable-next-line react-hooks/immutability
       loadKeyStatus(1, pageSize, null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -302,7 +304,7 @@ export function MultiKeyManageDialog({
         )}
         // Key balances add a column, which needs the wider dialog.
         contentClassName={cn(
-          'flex max-h-[min(90dvh,var(--dialog-available-height))] max-w-5xl flex-col',
+          'flex max-h-[min(90dvh,var(--dialog-available-height))] sm:max-w-5xl flex-col',
           keyBalances && 'sm:max-w-5xl'
         )}
         titleClassName='flex items-center gap-2'

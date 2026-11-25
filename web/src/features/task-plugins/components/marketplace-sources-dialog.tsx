@@ -103,7 +103,7 @@ export function MarketplaceSourcesDialog(props: MarketplaceSourcesDialogProps) {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className='max-w-2xl'>
+      <DialogContent className='sm:max-w-2xl'>
         <DialogHeader>
           <DialogTitle>{t('Marketplace sources')}</DialogTitle>
           <DialogDescription>

@@ -150,12 +150,7 @@ const createGroupSchema = (t: Translate) =>
 
 type ModelFormValues = z.infer<ReturnType<typeof createModelSchema>>
 type GroupFormValues = z.infer<ReturnType<typeof createGroupSchema>>
-type RatioTabId =
-  | 'models'
-  | 'unset-models'
-  | 'groups'
-  | 'tool-prices'
-  | 'upstream-sync'
+type RatioTabId = 'models' | 'groups' | 'tool-prices' | 'upstream-sync'
 
 type RatioSettingsCardProps = {
   modelDefaults: ModelFormValues
@@ -457,7 +452,6 @@ export function RatioSettingsCard({
 
   const tabLabels: Record<RatioTabId, string> = {
     models: 'Model prices',
-    'unset-models': 'Unset price models',
     groups: 'Group ratios',
     'tool-prices': 'Tool prices',
     'upstream-sync': 'Upstream price sync',
@@ -473,7 +467,7 @@ export function RatioSettingsCard({
   const defaultTab = visibleTabs[0] ?? 'models'
 
   const renderTabContent = (tab: RatioTabId) => {
-    if (tab === 'models' || tab === 'unset-models') {
+    if (tab === 'models') {
       if (pricingQuery.isError) {
         return (
           <ErrorState
@@ -505,7 +499,6 @@ export function RatioSettingsCard({
             onReset={handleResetRatios}
             isSaving={updateOption.isPending || savePricing.isPending}
             isResetting={resetMutation.isPending}
-            variant={tab === 'unset-models' ? 'unset' : 'default'}
           />
         </>
       )
@@ -551,9 +544,7 @@ export function RatioSettingsCard({
         <SettingsSection
           title={t(titleKey)}
           className={
-            defaultTab === 'models' || defaultTab === 'unset-models'
-              ? 'min-h-0 flex-1'
-              : undefined
+            defaultTab === 'models' ? 'min-h-0 flex-1' : undefined
           }
         >
           {renderTabContent(defaultTab)}
@@ -575,7 +566,7 @@ export function RatioSettingsCard({
                 key={tab}
                 value={tab}
                 className={
-                  tab === 'models' || tab === 'unset-models'
+                  tab === 'models'
                     ? 'flex min-h-0 flex-col data-hidden:hidden'
                     : 'min-h-0'
                 }
