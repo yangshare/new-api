@@ -543,9 +543,7 @@ export function RatioSettingsCard({
       {visibleTabs.length === 1 ? (
         <SettingsSection
           title={t(titleKey)}
-          className={
-            defaultTab === 'models' ? 'min-h-0 flex-1' : undefined
-          }
+          className={defaultTab === 'models' ? 'min-h-0 flex-1' : undefined}
         >
           {renderTabContent(defaultTab)}
         </SettingsSection>
