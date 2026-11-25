@@ -77,7 +77,7 @@ $replayFiles = @(
   'web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx'; 'web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx'
   'web/src/features/system-settings/auth/oauth-section.tsx'; 'web/src/features/system-settings/content/announcements-section.tsx'
   'web/src/features/system-settings/content/faq-section.tsx'; 'web/src/features/system-settings/content/uptime-kuma-section.tsx'
-  'web/src/features/system-settings/general/channel-affinity/index.tsx'; 'web/src/features/system-settings/models/claude-settings-card.tsx'
+  'web/src/features/system-settings/models/claude-settings-card.tsx'
   'web/src/features/system-settings/models/upstream-ratio-sync.tsx'
   'web/src/features/users/components/dialogs/user-binding-dialog.tsx'; 'web/src/features/users/components/users-table.tsx'
   'web/src/features/wallet/components/subscription-plans-card.tsx'; 'web/src/features/wallet/hooks/use-affiliate.ts'
@@ -306,7 +306,7 @@ export type UpdateOptionMutationRequest = UpdateOptionRequest & {
 | `web/src/features/system-settings/content/announcements-section.tsx` | `setAnnouncements(` 与 `setIsEnabled(enabled)` ← set-state-in-effect ×2；`max-w-2xl` → `sm:max-w-2xl` |
 | `web/src/features/system-settings/content/faq-section.tsx` | `setFaqList(` 与 `setIsEnabled(enabled)` ← ×2；`max-w-2xl` → `sm:max-w-2xl` |
 | `web/src/features/system-settings/content/uptime-kuma-section.tsx` | `setGroups(` 与 `setIsEnabled(enabled)` ← ×2 |
-| `web/src/features/system-settings/general/channel-affinity/index.tsx` | `void refreshCache()` ← set-state-in-effect |
+| `web/src/features/system-settings/general/channel-affinity/index.tsx` | 【已退役 2026-11-25】上游重写为 react-query（`refreshCache` 锚点消失），整文件取上游；已入 equalsUpstream |
 | `web/src/features/system-settings/models/claude-settings-card.tsx` | `onSave={form.handleSubmit(onSubmit)}` ← refs 注释（SettingsForm 处那条上游已自带） |
 | `web/src/features/system-settings/models/upstream-ratio-sync.tsx` | `setChannelEndpoints((previous) => {` ← set-state-in-effect（上游把 `prev` 改名 `previous`） |
 | `web/src/features/users/components/dialogs/user-binding-dialog.tsx` | `setShowBoundOnly(true)`（6 空格锚点）← set-state-in-effect |
@@ -462,7 +462,9 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
                'web/src/features/model-pricing/__tests__/editor-layout.test.tsx',
                'web/src/lib/theme-customization.ts',
                'web/src/context/theme-customization-provider.tsx',
-               'web/src/context/__tests__/theme-preferences.test.tsx') {
+               'web/src/context/__tests__/theme-preferences.test.tsx',
+               'web/src/features/system-settings/general/channel-affinity/index.tsx',
+               'web/src/features/system-settings/__tests__/pricing-sync.test.tsx') {
   $d = git diff --name-only upstream/main -- $f
   if ($d) { "FAIL 应等于上游`t$f" } else { "PASS (=upstream) $f" }
 }
@@ -471,6 +473,8 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
 > 锚点索引变更记录（2026-08-27）：随 B1/B4/B5 退役移除 model_ratio/theme.css/types/use-update-option/update-option-results 五组正向锚点；新增 B12 草稿徽标锚点 `isDraftChanged` 与上述退役反向断言。`theme-presets.css` 的 data-theme-preset 为上游自带预设机制，保留正向校验。
 >
 > 锚点索引变更记录（2026-11-01）：随 B12/B17 退役与 C1 缩围移除 model-ratio-table-columns（isDraftChanged）与 theme-customization（anthropic）两组正向锚点；equalsUpstream 反向断言新增 model-ratio-form、model-ratio-table-columns、editor-layout.test、theme-customization、theme-customization-provider、theme-preferences.test 六文件。`theme-presets.css` 的 data-theme-preset 为上游自带预设机制，保留正向校验。
+>
+> 锚点索引变更记录（2026-11-25）：B10 的 channel-affinity/index.tsx 随上游 react-query 重写退役（refreshCache 锚点消失，整取上游）；pricing-sync.test.tsx 本地 oxfmt 折行差异主动放弃（整取上游）。两文件加入 equalsUpstream 反向断言。
 
 ## 手册维护纪律
 
@@ -488,3 +492,4 @@ foreach ($f in 'setting/ratio_setting/model_ratio.go',
 | 2026-10-11 | 8f6961c67 | 262 commits（1603 文件，+244k/−46k） | 最大单轮同步。上游架构级变更全收：任务适配器→JS 插件（moejs）、relaykit 大修+tokenkit、Responses WebSocket、表达式计费扩展、控制台 i18n 重写(#7712)、安全强化批。冲突面 71 文件整取上游后重放 60 个：B8 前后端融合（上游首触 controller/subscription.go）、B2/B3/B11/B12 常规、B7+B13 部署定制、B15/B16/B17/B18 补录建档、B10 扩至 35 文件并废弃 7 项（详见 B10 废弃记录）。rename 检测带出 2 个非 both 冲突（two-fa-setup-dialog、channel-health-section，整取上游）；上游删除 account-bindings-tab 接受；.codegraph/.superpowers/.zcode 借 B7 未重放窗口误入 merge commit，已补 fix commit 解除跟踪。C1 在新定价结构上重新执行（unset-models 页签/variant 管线清除 + editor-layout 测试收缩为单 variant）。locale 红线：七语混淆行与上游逐字节一致 PASS。门槛全过：go build/test、relaykit GOWORK=off、typecheck/build/vitest 2196 全绿、oxfmt 54 文件净（spawnSync ENOENT 勘误见验证门槛注）。theme-preferences 测试按 B17 本地语义改写（preset=anthropic、defaults 字体 serif）。 |
 | 2026-10-31 | 0f38a14a5 | 150 commits（546 文件，+39k/−8k） | 冲突面 27 文件（4 处内容冲突：Dockerfile、channel_affinity_test、notification-tab、model-ratio-table-columns），无 rename 带出的非 both 冲突、无合并删除。重放：B2/B3/B7/B10(6 文件+datetime-picker 补录)/B11/B12/B18 常规、C1 editor-layout 测试再收缩（上游新增 Expose ratio API 断言段，单 variant 融合）、B19 flow 过滤器脱敏与 B20 misc.go 邮箱验证门禁建档（此前漏登）。B9 退役（上游 atomic.Int64 重写同解碰撞）；redemption-form.ts 纯 import 折行归入有意放弃。locale 考古：14 个本地死键（零 t() 引用，11 个上游本轮删、3 个上游从未有）不重放，随上游版自然清除；B11 五键尾注入+i18n:sync 归一，七语混淆行与上游逐字节一致 PASS。工具链：上游 typecheck 换 `bun check -b`（Bun ≥1.4.3 内置），本地 bun 1.3.14→升级后执行；affinity 测试更名前缀仍匹配。门槛：go build/三组 go test、relaykit GOWORK=off（53 文件改动）、build 过、vitest 2471 全绿（首轮 1 例偶发失败两轮未复现）、format:check 净（4 文件 oxfmt 归一：1 本地融合+3 上游带入，纯折行）；typecheck 因本地 Bun 1.3.14 无 `bun check` 先以 `bunx -p typescript@latest tsc -b` 等价通过，Bun 经 npm 通道升级至 1.4.4 后原命令 `bun check -b` 补跑通过（1412 文件 / 2 项目，721ms）。漂移检测：双方都改 27 文件断言全过，仅本地 102 文件零被动。 |
 | 2026-11-01 | —（非同步轮·退役专项） | — | 复盘定策「保留有价值的、无价值的取上游」：B12 草稿徽标退役（model-ratio-table-columns 整取上游）、B17 默认主题 anthropic 退役（theme-customization.ts / theme-customization-provider.tsx / theme-preferences.test.tsx 整取上游）、C1 缩围（model-ratio-form.tsx 与 editor-layout.test.tsx 整取上游，仅留 section-registry / ratio-settings-card 两处入口剔除）。B11 键 2/3 七语同删 + i18n:sync（diff 恰 7×2 行删除、无回填、混淆品牌行逐字节未变），键集 5→3。B10/B15 经核实维持现状（上游自身代码亦带同款抑制注释，每轮付费子集仅数文件）。门槛：6 文件 equalsUpstream PASS、unset-models 反向断言 PASS、typecheck（bun check -b，1412 文件 0 错）、build 过、vitest 定向 theme-preferences + editor-layout 2 文件 20 例全绿（回归上游语义）。go 侧零改动未跑。 |
+| 2026-11-25 | ea343c4a8 | 72 commits（618 文件，+85.9k/−5.7k） | 主体=上游 #8271 插件体系 2.0（provider/request 插件+社区市场+system_sync_topics 节点同步——复用 SystemTask 表无新表，master 首启跑 MigrateSensitiveWords 把旧敏感词迁为 request-filter 实例）+ MoeForge/moejs 迁移与 moego 流式读取（relaykit 去 gjson/sjson）+ 定价评审草稿、易支付 RSA、Redis 鉴权缓存 HMAC、HTTP/2 健康探测、HOST 环境变量。冲突面 21 文件（2 处内容冲突：multi-key-manage-dialog、channel-affinity），全部整取上游后重放：B7/B8/B2/B3/B18/B10(3 文件)/B11(3 键)/C1 常规；B10 channel-affinity 退役（上游 react-query 重写，refreshCache 锚点消失）、pricing-sync.test.tsx 本地 oxfmt 折行差异主动放弃，两文件入 equalsUpstream。locale：三键尾注入+i18n:sync，七语各 7800 键（上游 7797+3），混淆品牌行逐字节一致 PASS。门槛：go build、affinity/Subscription 两组 go test、relaykit GOWORK=off build+test、tokenkit build、typecheck（bun check -b，1503 文件 0 错）、build、vitest 全量 2911 过（首轮 1 例上游 visual-billing-editor 偶发超时 20s，单文件 42 例与全量复跑均绿，同 2026-10-31 轮模式）、format:check 8 改动文件净（1 文件 oxfmt 归一）、锚点 49 断言 + 漂移检测（双方都改 21 / 仅本地 103）全过。三库矩阵与启动迁移升级验证未跑（改动均为上游侧代码，部署时需 fresh + 代表库升级各启动两次验证 MigrateSensitiveWords 与 SystemTask sync 行为）。 |
